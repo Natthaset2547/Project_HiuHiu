@@ -1,0 +1,17 @@
+# --- Django backend ---
+hiu-hiu backend/.env
+hiu-hiu backend/venv/
+hiu-hiu backend/media/
+hiu-hiu backend/**/__pycache__/
+hiu-hiu backend/**/*.py[cod]
+hiu-hiu backend/db.sqlite3
+
+# --- Next.js frontend ---
+hiu-hiu project/node_modules/
+hiu-hiu project/.next/
+hiu-hiu project/.env*.local
+hiu-hiu project/tsconfig.tsbuildinfo
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
