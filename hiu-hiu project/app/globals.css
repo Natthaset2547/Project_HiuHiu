@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
 @theme inline {
   --font-sans: var(--font-ibm-plex-thai), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-prompt), ui-sans-serif, system-ui, sans-serif;
