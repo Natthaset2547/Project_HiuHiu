@@ -146,14 +146,17 @@ MAILERS = {
 
 # อนุญาตให้ทุกหน้าเว็บสามารถดึง API ได้ 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    'http://127.0.0.1:3000',
-    'http://localhost:3000',
-]
-CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:3000',
-    'http://localhost:3000',
-]
+CORS_ALLOW_ALL_ORIGINS = True
+
+# ถ้าต้องการระบุเฉพาะบางโดเมน (ตัวอย่าง)
+# CORS_ALLOWED_ORIGINS = [
+#     'http://127.0.0.1:3000',
+#     'http://localhost:3000',
+# ]
+# CSRF_TRUSTED_ORIGINS = [
+#     'http://127.0.0.1:3000',
+#     'http://localhost:3000',
+# ]
 
 # ตั้งค่า Search API
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
