@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework import viewsets
-from .models import Banner, RiskRecord, Shop, normalize_risk_identifier
+from .models import Banner, RiskRecord, RiskEvidence, Shop, normalize_risk_identifier
 from .serializers import BannerSerializer, RiskRecordSerializer, ShopSerializer
 
 
@@ -130,26 +130,26 @@ def local_risk_response(query):
                 'bad_records_found': len(matching_records),
                 'source': 'registry',
                 'record_sources': sources,
-                'disclaimer': 'โปรดตรวจสอบหลักฐานและติดต่อหน่วยงานที่เกี่ยวข้องก่อนทำรายการ',
+                'disclaimer': 'ข้อมูลนี้ถูกเพิ่มโดยผู้ดูแลระบบเพื่อเตือนภัยผู้ใช้งาน โปรดระมัดระวังก่อนทำรายการ',
             }
 
         if 'safe' in statuses:
             return {
                 'status': 'safe',
-                'message': 'พบข้อมูลที่ผู้ดูแลระบบยืนยันแล้ว',
+                'message': 'พบข้อมูลที่ผู้ดูแลระบบยืนยันแล้วว่าปลอดภัย',
                 'bad_records_found': 0,
                 'source': 'registry',
                 'record_sources': sources,
-                'disclaimer': 'สถานะนี้อ้างอิงจากแหล่งข้อมูลที่ผู้ดูแลระบบบันทึกไว้ ไม่ใช่การรับรองความปลอดภัย 100%',
+                'disclaimer': 'ข้อมูลนี้ได้รับการตรวจสอบโดยผู้ดูแลระบบ',
             }
 
         return {
             'status': 'pending',
-            'message': 'พบข้อมูลในทะเบียน แต่ยังอยู่ระหว่างการตรวจสอบ',
+            'message': 'พบข้อมูลนี้ในระบบ แต่ยังอยู่ระหว่างการตรวจสอบ',
             'bad_records_found': 0,
             'source': 'registry',
             'record_sources': sources,
-            'disclaimer': 'โปรดตรวจสอบข้อมูลเพิ่มเติมก่อนทำรายการ',
+            'disclaimer': 'ข้อมูลนี้อยู่ระหว่างรอผู้ดูแลระบบตรวจสอบความถูกต้อง',
         }
 
     matching_shops = find_matching_shops(query)
@@ -242,7 +242,7 @@ def search_brave_for_risk(query):
         params={
             'q': risk_search_query(query),
             'count': 10,
-            'country': 'TH',
+            'country': 'ALL',
             'search_lang': 'th',
         },
         timeout=10,
@@ -256,14 +256,95 @@ def search_brave_for_risk(query):
     return 'brave', [finding for finding in findings if finding]
 
 
+# เว็บที่น่าเชื่อถือสำหรับรายงานคนโกงในไทย
+TRUSTED_SCAM_DOMAINS = {
+    'blacklistseller.com',
+    'checkscam.in.th',
+    'thaipoliceonline.com',
+    'sondhitalk.com',
+    'nafifa.com',
+}
+
+MIN_UNTRUSTED_RESULTS = 3  # ต้องเจอกี่ผลจากเว็บทั่วไป ถึงจะนับว่า "น่าสงสัย"
+
+
+def is_trusted_domain(url: str) -> bool:
+    from urllib.parse import urlparse
+    try:
+        hostname = urlparse(url).hostname or ''
+        return any(hostname == d or hostname.endswith('.' + d) for d in TRUSTED_SCAM_DOMAINS)
+    except Exception:
+        return False
+
+
+def filter_relevant_findings(findings, query):
+    if not findings:
+        return []
+
+    search_term = query.lower().replace('http://', '').replace('https://', '').replace('-', '').replace(' ', '')
+
+    trusted = []
+    untrusted = []
+    for f in findings:
+        text_to_search = (f['title'] + f['snippet'] + f['url']).lower().replace('-', '').replace(' ', '')
+        if search_term not in text_to_search:
+            continue
+        if is_trusted_domain(f['url']):
+            trusted.append(f)
+        else:
+            untrusted.append(f)
+
+    # ถ้าเจอในเว็บน่าเชื่อถือ → แสดงแค่ trusted เท่านั้น ไม่ปนกับ untrusted
+    if trusted:
+        return trusted
+
+    # ถ้าไม่มีเว็บน่าเชื่อถือ → ต้องเจออย่างน้อย MIN_UNTRUSTED_RESULTS ผล จึงจะแสดง
+    if len(untrusted) >= MIN_UNTRUSTED_RESULTS:
+        return untrusted
+
+    return []
+
+
+def search_serper_for_risk(query):
+    if not settings.SERPER_API_KEY:
+        raise ValueError('ยังไม่ได้ตั้งค่า Serper API')
+
+    response = requests.post(
+        'https://google.serper.dev/search',
+        headers={
+            'X-API-KEY': settings.SERPER_API_KEY,
+            'Content-Type': 'application/json',
+        },
+        json={
+            'q': risk_search_query(query),
+            'gl': 'th',
+            'hl': 'th',
+            'num': 10,
+        },
+        timeout=10,
+    )
+    response.raise_for_status()
+    data = response.json()
+    findings = [
+        make_finding(item.get('title'), item.get('link'), item.get('snippet'))
+        for item in data.get('organic', [])
+    ]
+    return 'serper', [f for f in findings if f]
+
+
 def search_external_risk_sources(query):
     if settings.RISK_SEARCH_PROVIDER in {'none', 'local', 'off'}:
         return 'local-only', []
-    if settings.RISK_SEARCH_PROVIDER == 'brave':
-        return search_brave_for_risk(query)
-    if settings.RISK_SEARCH_PROVIDER == 'google':
-        return search_google_for_risk(query)
-    raise ValueError('ไม่รู้จักผู้ให้บริการค้นหาที่ตั้งค่าไว้')
+    if settings.RISK_SEARCH_PROVIDER == 'serper':
+        provider, findings = search_serper_for_risk(query)
+    elif settings.RISK_SEARCH_PROVIDER == 'brave':
+        provider, findings = search_brave_for_risk(query)
+    elif settings.RISK_SEARCH_PROVIDER == 'google':
+        provider, findings = search_google_for_risk(query)
+    else:
+        raise ValueError('ไม่รู้จักผู้ให้บริการค้นหาที่ตั้งค่าไว้')
+
+    return provider, filter_relevant_findings(findings, query)
 
 # API สำหรับจัดการข้อมูลร้านค้าในฐานข้อมูล (อันเดิม)
 class IsStaffOrReadOnly(BasePermission):
@@ -288,6 +369,25 @@ class RiskRecordViewSet(viewsets.ModelViewSet):
     queryset = RiskRecord.objects.all()
     serializer_class = RiskRecordSerializer
     permission_classes = [IsStaff]
+
+    def create(self, request, *args, **kwargs):
+        evidence_images = request.FILES.getlist('evidence_images')
+        
+        # DRF's standard create logic
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Save multiple images if provided
+        if evidence_images:
+            for img in evidence_images:
+                from .models import RiskEvidence
+                RiskEvidence.objects.create(record=serializer.instance, image=img)
+                
+        headers = self.get_success_headers(serializer.data)
+        # re-fetch data so it includes evidences in the response
+        result_serializer = self.get_serializer(serializer.instance)
+        return Response(result_serializer.data, status=201, headers=headers)
 
 
 class BannerViewSet(viewsets.ModelViewSet):
@@ -368,6 +468,54 @@ def current_user(request):
     return Response({'user': user_payload(request.user)})
 
 # API สำหรับประเมินประวัติความเสี่ยงจากข้อมูลที่ผู้ใช้ระบุ
+@api_view(['POST'])
+def report_risk(request):
+    data = request.data
+    reporter_name = str(data.get('reporter_name', '')).strip() or 'แจ้งจากผู้ใช้งานทั่วไป'
+    notes = str(data.get('notes', '')).strip()
+    evidence_images = request.FILES.getlist('evidence_images')
+
+    fields_to_create = []
+    if data.get('bank_account'):
+        fields_to_create.append(('bank_account', str(data.get('bank_account', '')).strip()))
+    if data.get('account_owner'):
+        fields_to_create.append(('account_owner', str(data.get('account_owner', '')).strip()))
+    if data.get('shop_name'):
+        fields_to_create.append(('shop_name', str(data.get('shop_name', '')).strip()))
+    if data.get('shop_link'):
+        fields_to_create.append(('shop_link', str(data.get('shop_link', '')).strip()))
+
+    if not fields_to_create:
+        return Response({'error': 'กรุณากรอกข้อมูลอย่างน้อย 1 อย่าง'}, status=400)
+
+    created_count = 0
+    for id_type, id_val in fields_to_create:
+        if id_val:
+            # ใช้ get_or_create เพื่อป้องกัน error 500 (IntegrityError) ถ้าข้อมูลซ้ำ
+            record, created = RiskRecord.objects.get_or_create(
+                identifier_type=id_type,
+                identifier=id_val,
+                defaults={
+                    'status': 'pending',
+                    'source_name': reporter_name,
+                    'notes': notes,
+                    'is_active': True,
+                }
+            )
+            # Save all uploaded images for this record
+            if evidence_images:
+                for img in evidence_images:
+                    RiskEvidence.objects.create(record=record, image=img)
+            
+            if created:
+                created_count += 1
+            # ถ้ามีอยู่แล้ว แต่ถูกตั้งว่าปลอดภัย อาจจะไม่ได้แก้ แต่ก็โอเค เพราะแจ้งเบาะแสไม่ควรทับข้อมูลแอดมิน
+
+    if created_count == 0:
+        return Response({'message': 'ข้อมูลนี้ได้รับแจ้งไว้แล้วในระบบ ขอบคุณที่แจ้งเบาะแสครับ'})
+
+    return Response({'message': 'แจ้งเบาะแสสำเร็จ ข้อมูลของท่านเข้าสู่ระบบตรวจสอบแล้ว ขอบคุณครับ'})
+
 @api_view(['GET', 'POST'])
 def check_shop_risk(request):
     if request.method == 'POST':
@@ -382,47 +530,73 @@ def check_shop_risk(request):
         return Response({'error': 'กรุณากรอกชื่อร้าน ลิงก์ เลขบัญชี หรือชื่อเจ้าของบัญชี'}, status=400)
 
     local_result = local_risk_response(query)
-    if local_result:
-        return Response(local_result)
+
+    # ตรวจว่าเป็นเลขบัญชีธนาคารหรือไม่ (ตัวเลขล้วน 8-20 หลัก)
+    is_bank_account = query.replace('-', '').replace(' ', '').isdigit() and 8 <= len(query.replace('-', '').replace(' ', '')) <= 20
 
     try:
         provider, findings = search_external_risk_sources(query)
-        if provider == 'local-only':
-            return Response({
-                'checked_fields': ['ข้อมูลที่กรอก'],
-                'bad_records_found': 0,
-                'status': 'pending',
-                'message': 'ยังไม่พบข้อมูลในฐานข้อมูลภายใน และระบบค้นหาภายนอกยังไม่เปิดใช้งาน',
-                'findings': [],
-                'source': 'registry',
-                'disclaimer': 'ขณะนี้ตรวจสอบได้จากข้อมูลภายในระบบเท่านั้น หากต้องการค้นหาทั่วเว็บให้เปิดใช้งานผู้ให้บริการค้นหาภายนอก',
-            })
-
-        if not findings:
-            message = 'ไม่พบข้อมูลจากผลการค้นหาภายนอก แต่ยังยืนยันความปลอดภัยไม่ได้'
+    except ValueError as error:
+        provider, findings = 'error', []
+        error_message = str(error)
+    except requests.HTTPError as error:
+        provider, findings = 'error', []
+        status_code = error.response.status_code if error.response is not None else 503
+        provider_name = settings.RISK_SEARCH_PROVIDER.capitalize()
+        if status_code in {401, 403}:
+            error_message = f'{provider_name} Search API ปฏิเสธคำขอ โปรดตรวจสอบ API key, การเปิดใช้บริการ และโควตา'
+        elif status_code == 429:
+            error_message = f'{provider_name} Search API ใช้งานเกินโควตา โปรดลองใหม่ภายหลัง'
         else:
-            message = 'พบข้อมูลภายนอกที่เกี่ยวข้อง โปรดตรวจสอบแหล่งอ้างอิงก่อนทำรายการ'
+            error_message = f'{provider_name} Search API ตอบกลับผิดพลาด โปรดลองใหม่ภายหลัง'
+    except requests.RequestException:
+        provider, findings = 'error', []
+        error_message = 'ระบบเชื่อมต่อผู้ให้บริการค้นหามีปัญหา กรุณาลองใหม่ภายหลัง'
 
+    # ถ้ามีข้อมูลที่แอดมินยืนยันไว้แล้ว (ในฐานข้อมูลเรา)
+    if local_result:
+        local_result['findings'] = findings
+        if findings:
+            local_result['source'] = f"{local_result['source']} + {provider}"
+        return Response(local_result)
+        
+    if provider == 'error':
+        return Response({'error': error_message}, status=503)
+
+    if provider == 'local-only':
+        if is_bank_account:
+            msg = 'ไม่พบเลขบัญชีนี้ในรายการบัญชีต้องสงสัย'
+            disclaimer = 'ข้อมูลอ้างอิงจากฐานข้อมูลภายในระบบ แนะนำให้ตรวจสอบกับธนาคารโดยตรงก่อนโอนเงิน'
+        else:
+            msg = 'ไม่พบประวัติการโกงในระบบของเรา'
+            disclaimer = 'แนะนำให้ตรวจสอบรีวิวและความน่าเชื่อถือของร้านเพิ่มเติมก่อนตัดสินใจโอนเงิน'
         return Response({
             'checked_fields': ['ข้อมูลที่กรอก'],
-            'bad_records_found': len(findings),
+            'bad_records_found': 0,
             'status': 'pending',
-            'message': message,
-            'findings': findings,
-            'source': provider,
-            'disclaimer': 'ผลการค้นหาออนไลน์เป็นข้อมูลประกอบเท่านั้น และไม่ใช่การยืนยันว่าปลอดภัยหรือโกง',
+            'message': msg,
+            'findings': [],
+            'source': 'registry',
+            'disclaimer': disclaimer,
         })
-    except ValueError as error:
-        return Response({'error': str(error)}, status=503)
-    except requests.HTTPError as error:
-        status_code = error.response.status_code if error.response is not None else 503
-        provider = settings.RISK_SEARCH_PROVIDER.capitalize()
-        if status_code in {401, 403}:
-            message = f'{provider} Search API ปฏิเสธคำขอ โปรดตรวจสอบ API key, การเปิดใช้บริการ และโควตา'
-        elif status_code == 429:
-            message = f'{provider} Search API ใช้งานเกินโควตา โปรดลองใหม่ภายหลัง'
+
+    if not findings:
+        if is_bank_account:
+            message = 'ไม่พบเลขบัญชีนี้ในรายการบัญชีต้องสงสัย'
+            disclaimer = 'ไม่พบประวัติการโกงจากการค้นหา แนะนำให้ตรวจสอบกับธนาคารโดยตรงก่อนโอนเงิน'
         else:
-            message = f'{provider} Search API ตอบกลับผิดพลาด โปรดลองใหม่ภายหลัง'
-        return Response({'error': message}, status=503)
-    except requests.RequestException:
-        return Response({'error': 'ระบบเชื่อมต่อผู้ให้บริการค้นหามีปัญหา กรุณาลองใหม่ภายหลัง'}, status=503)
+            message = 'ไม่พบประวัติการโกงจากการค้นหา'
+            disclaimer = 'แนะนำให้ตรวจสอบรีวิวและความน่าเชื่อถือของร้านเพิ่มเติมก่อนตัดสินใจโอนเงิน'
+    else:
+        message = 'พบข้อมูลที่ควรตรวจสอบเพิ่มเติม โปรดดูแหล่งอ้างอิงด้านล่างก่อนทำรายการ'
+        disclaimer = 'ผลการค้นหาออนไลน์เป็นข้อมูลประกอบเท่านั้น ควรตรวจสอบหลักฐานให้ครบก่อนตัดสินใจ'
+
+    return Response({
+        'checked_fields': ['ข้อมูลที่กรอก'],
+        'bad_records_found': len(findings),
+        'status': 'pending',
+        'message': message,
+        'findings': findings,
+        'source': provider,
+        'disclaimer': disclaimer,
+    })

@@ -76,6 +76,7 @@ class RiskRecord(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     source_name = models.CharField(max_length=255, default='ผู้ดูแลระบบ')
     evidence_url = models.URLField(max_length=500, blank=True)
+    evidence_image = models.ImageField(upload_to='evidence/', blank=True, null=True)
     notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -109,6 +110,15 @@ class RiskRecord(models.Model):
 
     def __str__(self):
         return f'{self.get_identifier_type_display()}: {self.identifier}'
+
+
+class RiskEvidence(models.Model):
+    record = models.ForeignKey(RiskRecord, on_delete=models.CASCADE, related_name='evidences')
+    image = models.ImageField(upload_to='evidence/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Evidence for {self.record.identifier}"
 
 
 class Banner(models.Model):

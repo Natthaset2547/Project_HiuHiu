@@ -1,7 +1,13 @@
 from urllib.parse import urlparse
 
 from rest_framework import serializers
-from .models import Banner, RiskRecord, Shop, normalize_risk_identifier
+from .models import Banner, RiskRecord, RiskEvidence, Shop, normalize_risk_identifier
+
+
+class RiskEvidenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskEvidence
+        fields = ['id', 'image', 'created_at']
 
 
 def normalize_shop_url(value):
@@ -34,6 +40,7 @@ class ShopSerializer(serializers.ModelSerializer):
 
 class RiskRecordSerializer(serializers.ModelSerializer):
     normalized_identifier = serializers.CharField(read_only=True)
+    evidences = RiskEvidenceSerializer(many=True, read_only=True)
 
     class Meta:
         model = RiskRecord

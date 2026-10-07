@@ -10,6 +10,7 @@ from .views import (
     login_view,
     logout_view,
     current_user,
+    report_risk,
 )
 
 router = DefaultRouter()
@@ -25,4 +26,5 @@ urlpatterns = [
     path('auth/login/', login_view, name='auth-login'),
     path('auth/logout/', logout_view, name='auth-logout'),
     path('auth/me/', current_user, name='auth-me'),
+    path('report-risk/', report_risk, name='report-risk'),
 ]

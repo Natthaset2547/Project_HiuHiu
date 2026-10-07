@@ -10,16 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # โค้ดลับสำหรับบังคับให้ Django รุ่นใหม่ ทำงานกับฐานข้อมูล XAMPP รุ่นเก่าได้
 import django.db.backends.base.base
-import django.db.backends.mysql.features # เพิ่มบรรทัดนี้
-
+import django.db.backends.mysql.features
 django.db.backends.base.base.BaseDatabaseWrapper.check_database_version_supported = lambda self: True
-django.db.backends.mysql.features.DatabaseFeatures.can_return_columns_from_insert = False # เพิ่มบรรทัดนี้เพื่อปิดการใช้ RETURNING
+django.db.backends.mysql.features.DatabaseFeatures.can_return_columns_from_insert = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,12 +30,12 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-gwv$g#0g41e)zjsr&4t9g2rq$=i*=p3$ir-yu14ahdj7oe6y&&'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-gwv$g#0g41e)zjsr&4t9g2rq$=i*=p3$ir-yu14ahdj7oe6y&&')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
+ALLOWED_HOSTS = ['*'] # ยอมรับทุก Host ในโหมด Deploy ฟรี
 
 
 # Application definition
@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic', # เพิ่ม whitenoise สำหรับจัดการไฟล์ static ใน production
     'django.contrib.staticfiles',
     'shops',
     'rest_framework',
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # เพิ่ม whitenoise
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -87,15 +89,12 @@ WSGI_APPLICATION = 'backend_api.wsgi.application'
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'hiuhiu_db',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', 'mysql://root:@127.0.0.1:3306/hiuhiu_db'),
+        conn_max_age=600,
+    )
 }
+
 
 
 # Password validation
@@ -155,11 +154,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
 ]
 
-# ตั้งค่า Google Custom Search API
+# ตั้งค่า Search API
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
 SEARCH_ENGINE_ID = os.getenv('SEARCH_ENGINE_ID', '')
-RISK_SEARCH_PROVIDER = os.getenv('RISK_SEARCH_PROVIDER', 'brave').strip().lower()
+RISK_SEARCH_PROVIDER = os.getenv('RISK_SEARCH_PROVIDER', 'serper').strip().lower()
 BRAVE_SEARCH_API_KEY = os.getenv('BRAVE_SEARCH_API_KEY', '')
+SERPER_API_KEY = os.getenv('SERPER_API_KEY', '')
 
 # ตั้งค่าสำหรับจัดการไฟล์รูปภาพที่อัปโหลด
 MEDIA_URL = '/media/'
