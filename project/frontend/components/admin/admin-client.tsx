@@ -94,9 +94,9 @@ export function AdminClient() {
   async function apiRequest(path: string, options: RequestInit = {}, omitJsonContentType = false) {
     const csrfResponse = await fetch(`${BACKEND_URL}/api/auth/csrf/`, { credentials: 'include' })
     const { csrfToken } = await csrfResponse.json()
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'X-CSRFToken': csrfToken,
-      ...(options.headers || {}),
+      ...(options.headers as Record<string, string> || {}),
     }
 
     if (!omitJsonContentType) {

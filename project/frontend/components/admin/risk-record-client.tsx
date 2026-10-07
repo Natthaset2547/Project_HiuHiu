@@ -37,6 +37,8 @@ type Row = {
   status: RecordStatus
   source_name: string
   notes: string
+  evidence_image?: string | null
+  evidences?: any[]
 }
 
 export function RiskRecordClient() {
@@ -181,7 +183,7 @@ export function RiskRecordClient() {
     }
 
     try {
-      const newRecords = []
+      const newRecords: Row[] = []
       for (const field of fieldsToCreate) {
         const formData = new FormData()
         formData.append('identifier_type', field.type)
