@@ -613,7 +613,7 @@ def check_shop_risk(request):
         return Response({
             'checked_fields': ['ข้อมูลที่กรอก'],
             'bad_records_found': 0,
-            'status': 'pending',
+            'status': 'safe',
             'message': msg,
             'findings': [],
             'source': 'registry',
@@ -634,7 +634,7 @@ def check_shop_risk(request):
     return Response({
         'checked_fields': ['ข้อมูลที่กรอก'],
         'bad_records_found': len(findings),
-        'status': 'pending',
+        'status': 'scam' if findings else 'safe',
         'message': message,
         'findings': findings,
         'source': provider,
