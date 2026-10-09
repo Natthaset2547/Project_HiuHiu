@@ -295,14 +295,27 @@ def has_scam_signal(finding: dict) -> bool:
     return any(word in text for word in SCAM_SIGNAL_WORDS)
 
 
+def is_always_scam_domain(url: str) -> bool:
+    """เช็คว่าเป็นเว็บฐานข้อมูลคนโกงโดยตรงหรือไม่ (ถ้าใช่ ไม่ต้องเช็ค keyword โกงในเนื้อหา)"""
+    from urllib.parse import urlparse
+    try:
+        hostname = urlparse(url).hostname or ''
+        always_scam = {'blacklistseller.com', 'checkscam.in.th', 'thaipoliceonline.com', 'checkgon.go.th', 'police9.go.th'}
+        return any(hostname == d or hostname.endswith('.' + d) for d in always_scam)
+    except Exception:
+        return False
+
 def filter_relevant_findings(findings, query):
     if not findings:
         return []
 
     trusted = []
     for f in findings:
-        # แสดงเฉพาะผลจากเว็บน่าเชื่อถือ AND ต้องมีสัญญาณโกงในเนื้อหาด้วย
-        if is_trusted_domain(f['url']) and has_scam_signal(f):
+        # 1. ถ้าเป็นเว็บขึ้นแบล็คลิสต์โดยตรง ถือว่าใช่เลย
+        if is_always_scam_domain(f['url']):
+            trusted.append(f)
+        # 2. ถ้าเป็นเว็บข่าว/เว็บบอร์ดทั่วไป ต้องมีคำเกี่ยวกับการโกงในเนื้อหาด้วย
+        elif is_trusted_domain(f['url']) and has_scam_signal(f):
             trusted.append(f)
 
     # ถ้าเจอในเว็บน่าเชื่อถือที่มีสัญญาณโกงจริง → แสดง
@@ -542,8 +555,27 @@ def check_shop_risk(request):
     # ตรวจว่าเป็นเลขบัญชีธนาคารหรือไม่ (ตัวเลขล้วน 8-20 หลัก)
     is_bank_account = query.replace('-', '').replace(' ', '').isdigit() and 8 <= len(query.replace('-', '').replace(' ', '')) <= 20
 
+    # สร้างคำค้นหาสำหรับ Google (ถ้าใส่ลิงก์มา ให้สกัดเอาแค่ชื่อร้าน หรือ ID)
+    external_query = query
+    if '://' in query or 'www.' in query or '.com' in query:
+        from urllib.parse import urlparse, parse_qs
+        try:
+            url_to_parse = query if '://' in query else f'https://{query}'
+            parsed = urlparse(url_to_parse)
+            
+            # ดึง username/ID ออกมาจาก Path หรือ Query
+            if 'profile.php' in parsed.path and 'id' in parse_qs(parsed.query):
+                external_query = parse_qs(parsed.query)['id'][0]
+            elif parsed.path and parsed.path != '/':
+                # ใช้ path ส่วนสุดท้ายเป็นชื่อร้าน เช่น facebook.com/therpshop -> therpshop
+                parts = [p for p in parsed.path.split('/') if p]
+                if parts:
+                    external_query = parts[-1].replace('@', '') # ตัด @ ออกด้วยเผื่อเป็น @LINE
+        except Exception:
+            pass
+
     try:
-        provider, findings = search_external_risk_sources(query)
+        provider, findings = search_external_risk_sources(external_query)
     except ValueError as error:
         provider, findings = 'error', []
         error_message = str(error)

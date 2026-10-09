@@ -140,7 +140,10 @@ export default function HomePage() {
                   result.status === 'safe' ? 'bg-green-500' : 
                   result.status === 'scam' ? 'bg-red-500' : 'bg-yellow-500'
                 }`}>
-                  {result.status === 'safe' ? 'ปลอดภัย' : result.status === 'scam' ? 'ควรระวัง' : result.bad_records_found > 0 ? 'พบสัญญาณน่าสงสัย' : 'ไม่พบประวัติการโกง'}
+                  {result.status === 'safe' ? 'ปลอดภัย' : 
+                   result.status === 'scam' ? 'ควรระวัง' : 
+                   result.status === 'pending' ? 'รอการตรวจสอบ' :
+                   result.bad_records_found > 0 ? 'พบสัญญาณน่าสงสัย' : 'ไม่พบประวัติการโกง'}
                 </span>
               </div>
               <p className="text-gray-600 mt-3">
