@@ -6,8 +6,7 @@ const localBackendHost =
     : '127.0.0.1'
 
 export const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  `http://${localBackendHost}:8000`
+  process.env.NEXT_PUBLIC_BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://hiuhiu-backend.onrender.com' : `http://${localBackendHost}:8000`)
 
 // ตัวอย่างฟังก์ชันดึงข้อมูลร้านค้า (Whitelist) ทั้งหมดจาก MySQL
 export async function getWhitelistedShops() {
