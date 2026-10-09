@@ -305,12 +305,24 @@ def is_always_scam_domain(url: str) -> bool:
     except Exception:
         return False
 
+def query_matches_finding(query: str, finding: dict) -> bool:
+    text = (finding.get('title', '') + ' ' + finding.get('snippet', '') + ' ' + finding.get('url', '')).lower()
+    query_parts = str(query).lower().split()
+    for part in query_parts:
+        if len(part) >= 3 and part in text:
+            return True
+    return False
+
 def filter_relevant_findings(findings, query):
     if not findings:
         return []
 
     trusted = []
     for f in findings:
+        # Check if the result actually mentions the query (avoid Google's broad match false positives)
+        if not query_matches_finding(query, f):
+            continue
+            
         # 1. ถ้าเป็นเว็บขึ้นแบล็คลิสต์โดยตรง ถือว่าใช่เลย
         if is_always_scam_domain(f['url']):
             trusted.append(f)
@@ -318,13 +330,9 @@ def filter_relevant_findings(findings, query):
         elif is_trusted_domain(f['url']) and has_scam_signal(f):
             trusted.append(f)
 
-    # ถ้าเจอในเว็บน่าเชื่อถือที่มีสัญญาณโกงจริง → แสดง
     if trusted:
         return trusted[:5]
-
-    # ถ้าไม่มีผลจากเว็บน่าเชื่อถือเลย → ไม่แสดงอะไร (ดีกว่าแสดงผลมั่วๆ)
     return []
-
 
 def search_serper_for_risk(query):
     if not settings.SERPER_API_KEY:
@@ -613,7 +621,7 @@ def check_shop_risk(request):
         return Response({
             'checked_fields': ['ข้อมูลที่กรอก'],
             'bad_records_found': 0,
-            'status': 'safe',
+            'status': 'neutral',
             'message': msg,
             'findings': [],
             'source': 'registry',
@@ -634,7 +642,7 @@ def check_shop_risk(request):
     return Response({
         'checked_fields': ['ข้อมูลที่กรอก'],
         'bad_records_found': len(findings),
-        'status': 'scam' if findings else 'safe',
+        'status': 'warning' if findings else 'neutral',
         'message': message,
         'findings': findings,
         'source': provider,

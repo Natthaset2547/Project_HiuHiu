@@ -131,19 +131,27 @@ export default function HomePage() {
           {result && (
             <div className={`mt-6 ml-0 md:ml-11 p-6 rounded-xl border-2 transition-all ${
               result.status === 'safe' ? 'border-green-400 bg-green-50' : 
-              result.status === 'scam' ? 'border-red-400 bg-red-50' : 'border-yellow-400 bg-yellow-50'
+                result.status === 'scam' ? 'border-red-400 bg-red-50' : 
+                result.status === 'warning' ? 'border-orange-400 bg-orange-50' :
+                result.status === 'neutral' ? 'border-gray-400 bg-gray-50' :
+                'border-yellow-400 bg-yellow-50'
             }`}>
               <h3 className="text-lg font-bold mb-3 text-gray-800">ผลการตรวจสอบ: {result.message}</h3>
               <div className="flex items-center gap-3 mb-2">
                 <span className="font-semibold text-gray-700">สถานะ:</span>
                 <span className={`px-4 py-1.5 rounded-full text-white text-sm font-bold shadow-sm ${
                   result.status === 'safe' ? 'bg-green-500' : 
-                  result.status === 'scam' ? 'bg-red-500' : 'bg-yellow-500'
+                    result.status === 'scam' ? 'bg-red-500' : 
+                    result.status === 'warning' ? 'bg-orange-500' :
+                    result.status === 'neutral' ? 'bg-gray-500' :
+                    'bg-yellow-500'
                 }`}>
-                  {result.status === 'safe' ? 'ปลอดภัย' : 
-                   result.status === 'scam' ? 'ควรระวัง' : 
+                  {result.status === 'safe' ? 'ตรวจสอบแล้ว ปลอดภัย' : 
+                   result.status === 'scam' ? 'บัญชีอันตราย' : 
+                   result.status === 'warning' ? 'พบข้อมูลน่าสงสัย' :
+                   result.status === 'neutral' ? 'ไม่พบประวัติ' :
                    result.status === 'pending' ? 'รอการตรวจสอบ' :
-                   result.bad_records_found > 0 ? 'พบสัญญาณน่าสงสัย' : 'ไม่พบประวัติการโกง'}
+                   'ไม่ทราบสถานะ'}
                 </span>
               </div>
               <p className="text-gray-600 mt-3">
