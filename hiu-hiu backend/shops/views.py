@@ -263,9 +263,21 @@ TRUSTED_SCAM_DOMAINS = {
     'thaipoliceonline.com',
     'sondhitalk.com',
     'nafifa.com',
+    'pantip.com',           # pantip มีกระทู้แจ้งโกงเยอะมาก
+    'thairath.co.th',       # ข่าวไทยรัฐ
+    'kapook.com',
+    'sanook.com',
+    'manager.co.th',
+    'prachachat.net',
+    'bangkokbiznews.com',
 }
 
-MIN_UNTRUSTED_RESULTS = 3  # ต้องเจอกี่ผลจากเว็บทั่วไป ถึงจะนับว่า "น่าสงสัย"
+# คำในชื่อลิงก์/เนื้อหาที่บ่งบอกว่าเป็นการรายงานโกง
+SCAM_SIGNAL_WORDS = {
+    'โกง', 'หลอก', 'มิจฉาชีพ', 'แบล็คลิสต์', 'blacklist',
+    'scam', 'fraud', 'แจ้งความ', 'ระวัง', 'เตือน', 'หลอกลวง',
+    'ไม่ได้รับของ', 'โอนแล้วหาย', 'ปิด ig', 'บล็อค',
+}
 
 
 def is_trusted_domain(url: str) -> bool:
@@ -277,31 +289,27 @@ def is_trusted_domain(url: str) -> bool:
         return False
 
 
+def has_scam_signal(finding: dict) -> bool:
+    """เช็คว่าผลลัพธ์นี้มีสัญญาณเกี่ยวกับการโกงจริงๆ ไหม"""
+    text = (finding.get('title', '') + ' ' + finding.get('snippet', '')).lower()
+    return any(word in text for word in SCAM_SIGNAL_WORDS)
+
+
 def filter_relevant_findings(findings, query):
     if not findings:
         return []
 
-    search_term = query.lower().replace('http://', '').replace('https://', '').replace('-', '').replace(' ', '')
-
     trusted = []
-    untrusted = []
     for f in findings:
-        text_to_search = (f['title'] + f['snippet'] + f['url']).lower().replace('-', '').replace(' ', '')
-        if search_term not in text_to_search:
-            continue
-        if is_trusted_domain(f['url']):
+        # แสดงเฉพาะผลจากเว็บน่าเชื่อถือ AND ต้องมีสัญญาณโกงในเนื้อหาด้วย
+        if is_trusted_domain(f['url']) and has_scam_signal(f):
             trusted.append(f)
-        else:
-            untrusted.append(f)
 
-    # ถ้าเจอในเว็บน่าเชื่อถือ → แสดงแค่ trusted เท่านั้น ไม่ปนกับ untrusted
+    # ถ้าเจอในเว็บน่าเชื่อถือที่มีสัญญาณโกงจริง → แสดง
     if trusted:
-        return trusted
+        return trusted[:5]
 
-    # ถ้าไม่มีเว็บน่าเชื่อถือ → ต้องเจออย่างน้อย MIN_UNTRUSTED_RESULTS ผล จึงจะแสดง
-    if len(untrusted) >= MIN_UNTRUSTED_RESULTS:
-        return untrusted
-
+    # ถ้าไม่มีผลจากเว็บน่าเชื่อถือเลย → ไม่แสดงอะไร (ดีกว่าแสดงผลมั่วๆ)
     return []
 
 

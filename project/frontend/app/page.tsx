@@ -147,22 +147,26 @@ export default function HomePage() {
                 แหล่งข้อมูล: {result.source.split(' + ').map((s: string) => sourceLabels[s] || s).join(' และ ')}
               </p>
               {result.record_sources && <p className="mt-2 text-sm text-gray-600">ผู้ตรวจสอบหรือแหล่งอ้างอิง: {result.record_sources}</p>}
-              {findings.length > 0 && (
-                <ul className="mt-4 space-y-3 border-t border-gray-200 pt-4 text-sm text-gray-700">
-                  {findings.map((finding) => (
-                    <li key={finding.url}>
-                      <a href={finding.url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 hover:underline">
-                        {finding.title}
-                      </a>
-                      {finding.snippet && (
-                        <p 
-                          className="mt-1 leading-relaxed text-gray-600" 
-                          dangerouslySetInnerHTML={{ __html: finding.snippet }} 
-                        />
-                      )}
-                    </li>
-                  ))}
-                </ul>
+              {/* แสดงผล Google Search เฉพาะเมื่อไม่พบในระบบ (source มาจาก external) เท่านั้น */}
+              {result.status !== 'safe' && !['risk_records','whitelist','registry'].some(s => result.source?.includes(s)) && findings.length > 0 && (
+                <div className="mt-4 border-t border-gray-200 pt-4">
+                  <p className="text-sm font-semibold text-gray-600 mb-3">🔍 ผลการค้นหาจาก Google เพื่อประกอบการตัดสินใจ:</p>
+                  <ul className="space-y-3 text-sm text-gray-700">
+                    {findings.map((finding) => (
+                      <li key={finding.url}>
+                        <a href={finding.url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-700 hover:underline">
+                          {finding.title}
+                        </a>
+                        {finding.snippet && (
+                          <p 
+                            className="mt-1 leading-relaxed text-gray-600" 
+                            dangerouslySetInnerHTML={{ __html: finding.snippet }} 
+                          />
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
               {result.disclaimer && <p className="mt-4 text-xs text-gray-500">{result.disclaimer}</p>}
             </div>

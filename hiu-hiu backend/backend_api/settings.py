@@ -92,7 +92,8 @@ DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', 'mysql://root:@127.0.0.1:3306/hiuhiu_db'),
         conn_max_age=600,
-    )
+    ),
+    'local_mysql': dj_database_url.parse('mysql://root:@127.0.0.1:3306/hiuhiu_db')
 }
 
 
