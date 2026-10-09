@@ -1,7 +1,7 @@
 # --- Django backend ---
 hiu-hiu backend/.env
 hiu-hiu backend/venv/
-hiu-hiu backend/media/
+# hiu-hiu backend/media/
 hiu-hiu backend/**/__pycache__/
 hiu-hiu backend/**/*.py[cod]
 hiu-hiu backend/db.sqlite3
