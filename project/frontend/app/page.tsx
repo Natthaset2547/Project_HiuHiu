@@ -147,8 +147,8 @@ export default function HomePage() {
                 แหล่งข้อมูล: {result.source.split(' + ').map((s: string) => sourceLabels[s] || s).join(' และ ')}
               </p>
               {result.record_sources && <p className="mt-2 text-sm text-gray-600">ผู้ตรวจสอบหรือแหล่งอ้างอิง: {result.record_sources}</p>}
-              {/* แสดงผล Google Search เฉพาะเมื่อไม่พบในระบบ (source มาจาก external) เท่านั้น */}
-              {result.status !== 'safe' && !['risk_records','whitelist','registry'].some(s => result.source?.includes(s)) && findings.length > 0 && (
+              {/* แสดงผล Google Search ทุกครั้งที่มีข้อมูลการโกงจริงๆ (backend คัดกรองมาให้แล้ว) ไม่ว่าแอดมินจะตั้งสถานะอะไรก็ตาม */}
+              {findings.length > 0 && (
                 <div className="mt-4 border-t border-gray-200 pt-4">
                   <p className="text-sm font-semibold text-gray-600 mb-3">🔍 ผลการค้นหาจาก Google เพื่อประกอบการตัดสินใจ:</p>
                   <ul className="space-y-3 text-sm text-gray-700">
