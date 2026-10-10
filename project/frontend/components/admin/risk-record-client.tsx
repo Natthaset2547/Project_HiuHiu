@@ -341,7 +341,7 @@ export function RiskRecordClient() {
                 type="button"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center gap-2 border-dashed border-2 bg-slate-50/50 hover:bg-slate-100 text-muted-foreground"
+                className="w-full flex items-center justify-center gap-2 border-dashed border-2 bg-transparent hover:bg-white/10 text-white/70 hover:text-white transition-all"
               >
                 <ImagePlus className="size-5" />
                 เพิ่มรูปภาพหลักฐาน (เลือกทีละรูป หรือหลายรูปก็ได้)
