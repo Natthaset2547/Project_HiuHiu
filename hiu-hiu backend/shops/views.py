@@ -449,10 +449,15 @@ class BannerViewSet(viewsets.ModelViewSet):
 
 def user_payload(user):
     from shops.models import UserProfile
+    import os
     profile, _ = UserProfile.objects.get_or_create(user=user)
     avatar_url = profile.avatar.url if profile.avatar else None
     if avatar_url and not avatar_url.startswith('http'):
-        avatar_url = f"{'https://hiuhiu-backend.onrender.com' if not settings.DEBUG else 'http://localhost:8000'}{avatar_url}"
+        if os.environ.get('RENDER') or not settings.DEBUG:
+            base_url = 'https://hiuhiu-backend.onrender.com'
+        else:
+            base_url = 'http://localhost:8000'
+        avatar_url = f"{base_url}{avatar_url}"
     return {
         'id': user.id,
         'username': user.username,
