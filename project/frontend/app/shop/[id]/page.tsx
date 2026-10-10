@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
+import { ShopReviews } from '@/components/shop/shop-reviews'
 import { PlatformIcon } from '@/components/platform-icon'
 import { BACKEND_URL } from '@/lib/api'
 
@@ -125,9 +126,14 @@ export default function ShopDetailPage() {
                 )}
                 <Link href="/shops" className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-5 text-sm font-medium text-foreground hover:bg-muted">
                   <ArrowLeft className="size-4" />
-                  กลับไดเรกทอรี
+                  กลับไปหน้าร้านค้าทั้งหมด
                 </Link>
               </div>
+            </div>
+            
+            {/* Review Section */}
+            <div className="border-t border-border bg-secondary/20 p-6 sm:p-8">
+              <ShopReviews shopId={shop.id.toString()} />
             </div>
           </article>
         )}

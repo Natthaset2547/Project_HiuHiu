@@ -12,7 +12,7 @@ export function ShopForm() {
         <input 
           type="text" 
           className="w-full border rounded-md p-2 text-sm" 
-          placeholder="เช่น รับหิ้ว Art Toy by K.A" 
+          placeholder="เช่น ร้านค้า Art Toy by K.A" 
         />
       </div>
 

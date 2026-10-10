@@ -43,7 +43,7 @@ export const categories: Category[] = [
   { slug: 'ของใช้', label: 'ของใช้/แก้วน้ำ/จิปาถะ', icon: Coffee },
   { slug: 'ของกิน', label: 'อาหารเสริม/ของกิน', icon: Cookie },
   { slug: 'k-pop', label: 'สินค้า K-Pop/J-Pop', icon: Music },
-  { slug: 'รับหิ้ว', label: 'ร้านรับหิ้ว/พรีออเดอร์', icon: Package },
+  { slug: 'ร้านค้า', label: 'พรีออเดอร์/อื่นๆ', icon: Package },
 ]
 
 export const statusConfig: Record<

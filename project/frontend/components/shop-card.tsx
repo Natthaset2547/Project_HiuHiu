@@ -1,4 +1,7 @@
-import { ExternalLink } from 'lucide-react'
+'use client'
+
+import { ExternalLink, Star, Heart } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PlatformIcon } from '@/components/platform-icon'
 import { statusConfig, type Shop } from '@/lib/data'
@@ -20,6 +23,36 @@ function isValidExternalUrl(value?: string | null) {
 }
 
 export function ShopCard({ shop }: { shop: Shop }) {
+  const [isFavorited, setIsFavorited] = useState((shop as any).is_favorited || false)
+  const [loadingFav, setLoadingFav] = useState(false)
+
+  async function toggleFavorite(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setLoadingFav(true)
+    try {
+      const csrfRes = await fetch(`${BACKEND_URL}/api/auth/csrf/`, { credentials: 'include' })
+      const { csrfToken } = await csrfRes.json()
+      
+      const res = await fetch(`${BACKEND_URL}/api/shops/${shop.id}/toggle_favorite/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        credentials: 'include'
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        setIsFavorited(data.status === 'favorited')
+      } else if (res.status === 401 || res.status === 403) {
+        alert('กรุณาเข้าสู่ระบบเพื่อบันทึกร้านโปรด')
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoadingFav(false)
+    }
+  }
+
   // 1. ซ่อม Status
   const rawStatus = (shop.status || 'safe').toLowerCase()
   const normalizedStatus = rawStatus === 'pending' ? 'watch' : rawStatus === 'scam' ? 'caution' : rawStatus
@@ -71,6 +104,14 @@ export function ShopCard({ shop }: { shop: Shop }) {
             image.src = fallbackImage
           }}
         />
+        <button
+          onClick={toggleFavorite}
+          disabled={loadingFav}
+          className="absolute left-3 top-3 z-10 grid size-8 place-items-center rounded-full bg-white shadow-md border border-gray-200 transition hover:scale-110 disabled:opacity-50 dark:bg-zinc-900/80 dark:border-zinc-700"
+          title="บันทึกร้านโปรด"
+        >
+          <Heart className={`size-4 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`} />
+        </button>
         <span
           className={`absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ${status.className}`}
         >
@@ -89,6 +130,18 @@ export function ShopCard({ shop }: { shop: Shop }) {
             {platformName}
           </span>
         </div>
+        
+        {/* Review Stars */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Star className="size-3.5 fill-yellow-400 text-yellow-400" />
+          <span className="font-semibold text-foreground">
+            {(shop as any).average_rating > 0 ? (shop as any).average_rating : 'ไม่มีคะแนน'}
+          </span>
+          <span>
+            ({(shop as any).review_count || 0} รีวิว)
+          </span>
+        </div>
+
         <p className="text-xs leading-relaxed text-muted-foreground">
           {shop.description || 'ไม่มีคำอธิบายสำหรับร้านค้านี้'}
         </p>

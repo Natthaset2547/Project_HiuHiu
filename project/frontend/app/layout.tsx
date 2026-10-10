@@ -3,9 +3,9 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'HiuHiu — รวมร้านรับหิ้วที่ไว้ใจได้',
+  title: 'HiuHiu — รวมร้านร้านค้าที่ไว้ใจได้',
   description:
-    'HiuHiu แพลตฟอร์มรวมร้านรับหิ้วที่ไว้ใจได้ ค้นหาร้าน ตรวจสอบประวัติร้านค้า และตรวจสอบลิงก์ก่อนสั่งซื้อ',
+    'HiuHiu แพลตฟอร์มรวมร้านร้านค้าที่ไว้ใจได้ ค้นหาร้าน ตรวจสอบประวัติร้านค้า และตรวจสอบลิงก์ก่อนสั่งซื้อ',
   generator: 'v0.app',
 }
 

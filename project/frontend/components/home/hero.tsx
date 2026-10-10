@@ -12,14 +12,16 @@ type Banner = {
   subtitle: string
   image: string
   link: string
+  button_type?: 'shop' | 'website' | 'none'
 }
 
 const fallbackBanner: Banner = {
   id: 0,
-  title: 'รวมร้านรับหิ้วที่ไว้ใจได้',
-  subtitle: 'ค้นหาร้านรับหิ้วจากทั่วโลก พร้อมสถานะความน่าเชื่อถือ ก่อนตัดสินใจสั่งซื้อทุกครั้ง',
+  title: 'รวมร้านค้าที่ไว้ใจได้',
+  subtitle: 'ค้นหาร้านค้าจากโซเชียลมีเดีย พร้อมสถานะความน่าเชื่อถือ ก่อนตัดสินใจสั่งซื้อทุกครั้ง',
   image: '/hero-desk.png',
   link: '',
+  button_type: 'none',
 }
 
 export function Hero() {
@@ -57,7 +59,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative min-h-[300px] overflow-hidden rounded-3xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 md:min-h-[360px]">
+    <section className="relative min-h-[300px] overflow-hidden rounded-3xl bg-blue-900 text-white shadow-lg shadow-primary/20 md:min-h-[360px]">
       {isFallback ? (
         <>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-700 to-blue-500" />
@@ -71,29 +73,31 @@ export function Hero() {
         </>
       )}
       <div className="relative flex min-h-[300px] flex-col justify-center gap-6 px-6 py-12 sm:px-12 md:min-h-[360px] md:max-w-[62%]">
-        <span className="w-fit rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-medium tracking-wide">HiuHiu Directory</span>
+        <span className="w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-medium tracking-wide text-white">HiuHiu Directory</span>
         <div>
-          <h1 className="font-display text-4xl font-bold leading-tight text-balance sm:text-5xl">{banner.title || fallbackBanner.title}</h1>
-          {banner.subtitle && <p className="mt-3 max-w-md text-sm text-primary-foreground/85 sm:text-base">{banner.subtitle}</p>}
+          <h1 className="font-display text-4xl font-bold leading-tight text-balance sm:text-5xl text-white">{banner.title || fallbackBanner.title}</h1>
+          {banner.subtitle && <p className="mt-3 max-w-md text-sm text-white/85 sm:text-base">{banner.subtitle}</p>}
         </div>
-          {banner.link ? (
-            <a href={banner.link} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 w-fit items-center gap-2 rounded-full bg-primary-foreground px-6 text-primary hover:bg-primary-foreground/90">
-              <Search className="size-4" />
-              ไปยังร้านค้า
-            </a>
-          ) : (
-            <Button render={<Link href="/shops" />} nativeButton={false} className="h-11 w-fit gap-2 rounded-full bg-primary-foreground px-6 text-primary hover:bg-primary-foreground/90">
-              <Search className="size-4" />
-              ดูร้านค้าทั้งหมด
-            </Button>
+          {banner.button_type !== 'none' && (
+            banner.link ? (
+              <a href={banner.link} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 w-fit items-center gap-2 rounded-full bg-white px-6 text-blue-900 hover:bg-white/90 font-medium">
+                <Search className="size-4" />
+                {banner.button_type === 'website' ? 'ไปยังเว็บไซต์' : 'ไปยังร้านค้า'}
+              </a>
+            ) : (
+              <Button render={<Link href="/shops" />} nativeButton={false} className="h-11 w-fit gap-2 rounded-full bg-white px-6 text-blue-900 hover:bg-white/90 font-medium">
+                <Search className="size-4" />
+                ดูร้านค้าทั้งหมด
+              </Button>
+            )
           )}
       </div>
       {banners.length > 1 && (
         <>
-            <button type="button" onClick={() => move(-1)} aria-label="แบนเนอร์ก่อนหน้า" className="absolute inset-y-0 left-3 my-auto grid size-9 place-items-center rounded-full bg-primary-foreground/20 text-primary-foreground backdrop-blur hover:bg-primary-foreground/30"><ChevronLeft className="size-5" /></button>
-            <button type="button" onClick={() => move(1)} aria-label="แบนเนอร์ถัดไป" className="absolute inset-y-0 right-3 my-auto grid size-9 place-items-center rounded-full bg-primary-foreground/20 text-primary-foreground backdrop-blur hover:bg-primary-foreground/30"><ChevronRight className="size-5" /></button>
+            <button type="button" onClick={() => move(-1)} aria-label="แบนเนอร์ก่อนหน้า" className="absolute inset-y-0 left-3 my-auto grid size-9 place-items-center rounded-full bg-white/20 text-white backdrop-blur hover:bg-white/30"><ChevronLeft className="size-5" /></button>
+            <button type="button" onClick={() => move(1)} aria-label="แบนเนอร์ถัดไป" className="absolute inset-y-0 right-3 my-auto grid size-9 place-items-center rounded-full bg-white/20 text-white backdrop-blur hover:bg-white/30"><ChevronRight className="size-5" /></button>
           <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-              {banners.map((item, index) => <button key={item.id} type="button" aria-label={`แสดงแบนเนอร์ที่ ${index + 1}`} onClick={() => setActiveIndex(index)} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-6 bg-primary-foreground' : 'w-1.5 bg-primary-foreground/40'}`} />)}
+              {banners.map((item, index) => <button key={item.id} type="button" aria-label={`แสดงแบนเนอร์ที่ ${index + 1}`} onClick={() => setActiveIndex(index)} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`} />)}
           </div>
         </>
       )}

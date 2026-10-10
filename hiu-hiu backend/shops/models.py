@@ -122,10 +122,16 @@ class RiskEvidence(models.Model):
 
 
 class Banner(models.Model):
+    BUTTON_CHOICES = [
+        ('shop', 'ไปยังร้านค้า'),
+        ('website', 'ไปยังเว็บไซต์'),
+        ('none', 'ไม่แสดงปุ่ม'),
+    ]
     title = models.CharField(max_length=255, blank=True)
     subtitle = models.TextField(blank=True)
     image = models.ImageField(upload_to='banners/')
     link = models.URLField(max_length=500, blank=True)
+    button_type = models.CharField(max_length=10, choices=BUTTON_CHOICES, default='shop')
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -135,3 +141,39 @@ class Banner(models.Model):
 
     def __str__(self):
         return self.title or f'Banner {self.pk}'
+
+class Review(models.Model):
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')])
+    comment = models.TextField(blank=True)
+    image = models.ImageField(upload_to='reviews/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['shop', 'user']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.shop.name} ({self.rating}/5)"
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='favorites')
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'shop']
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} saved {self.shop.name}"
+
+class UserProfile(models.Model):
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='profile')
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} Profile"

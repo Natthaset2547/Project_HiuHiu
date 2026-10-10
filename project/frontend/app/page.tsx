@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
 import { Hero } from '@/components/home/hero'
 import { Categories } from '@/components/home/categories'
+import { TrendingShops } from '@/components/home/trending-shops'
 import { BACKEND_URL } from '@/lib/api'
 
 type RiskResult = {
@@ -184,6 +185,7 @@ export default function HomePage() {
           )}
         </div>
         {/* ----- จบส่วนตรวจสอบประวัติร้านค้า ----- */}
+        <TrendingShops />
         <Categories />
       </main>
       <SiteFooter />

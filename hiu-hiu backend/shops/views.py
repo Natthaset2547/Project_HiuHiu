@@ -6,12 +6,13 @@ from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.hashers import make_password
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
-from rest_framework import viewsets
-from .models import Banner, RiskRecord, RiskEvidence, Shop, normalize_risk_identifier
-from .serializers import BannerSerializer, RiskRecordSerializer, ShopSerializer
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from .models import Banner, RiskRecord, RiskEvidence, Shop, Review, Favorite, normalize_risk_identifier
+from .serializers import BannerSerializer, RiskRecordSerializer, ShopSerializer, ReviewSerializer
 
 
 SOCIAL_HOST_ALIASES = {
@@ -389,6 +390,21 @@ class IsStaff(BasePermission):
 
 
 class ShopViewSet(viewsets.ModelViewSet):
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def toggle_favorite(self, request, pk=None):
+        shop = self.get_object()
+        favorite, created = Favorite.objects.get_or_create(user=request.user, shop=shop)
+        if not created:
+            favorite.delete()
+            return Response({'status': 'unfavorited'})
+        return Response({'status': 'favorited'})
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_favorites(self, request):
+        shops = Shop.objects.filter(favorited_by__user=request.user)
+        serializer = self.get_serializer(shops, many=True)
+        return Response(serializer.data)
+
     queryset = Shop.objects.all()
     serializer_class = ShopSerializer
     permission_classes = [IsStaffOrReadOnly]
@@ -432,13 +448,62 @@ class BannerViewSet(viewsets.ModelViewSet):
 
 
 def user_payload(user):
+    from shops.models import UserProfile
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    avatar_url = profile.avatar.url if profile.avatar else None
+    if avatar_url and not avatar_url.startswith('http'):
+        avatar_url = f"{'https://hiuhiu-backend.onrender.com' if not settings.DEBUG else 'http://localhost:8000'}{avatar_url}"
     return {
         'id': user.id,
         'username': user.username,
         'email': user.email,
         'is_staff': user.is_staff,
+        'avatar': avatar_url,
     }
 
+
+@api_view(['PATCH'])
+def update_profile(request):
+    if not request.user.is_authenticated:
+        return Response({'error': 'Not authenticated'}, status=401)
+    
+    user = request.user
+    username = str(request.data.get('username', '')).strip()
+    email = str(request.data.get('email', '')).strip()
+    password = str(request.data.get('password', ''))
+    avatar = request.FILES.get('avatar')
+
+    if avatar:
+        from shops.models import UserProfile
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.avatar = avatar
+        profile.save()
+
+    if username and username != user.username:
+        if get_user_model().objects.filter(username__iexact=username).exclude(id=user.id).exists():
+            return Response({'error': 'ชื่อผู้ใช้งานนี้ถูกใช้ไปแล้ว'}, status=400)
+        user.username = username
+
+    if email and email != user.email:
+        if get_user_model().objects.filter(email__iexact=email).exclude(id=user.id).exists():
+            return Response({'error': 'อีเมลนี้ถูกใช้ไปแล้ว'}, status=400)
+        user.email = email
+
+    if password:
+        old_password = str(request.data.get('old_password', ''))
+        if not old_password:
+            return Response({'error': 'กรุณายืนยันรหัสผ่านเดิมก่อนเปลี่ยนรหัสผ่านใหม่'}, status=400)
+        if not user.check_password(old_password):
+            return Response({'error': 'รหัสผ่านเดิมไม่ถูกต้อง'}, status=400)
+        if len(password) < 8:
+            return Response({'error': 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร'}, status=400)
+        user.set_password(password)
+
+    user.save()
+    if password:
+        login(request, user) # Re-login after password change to keep session valid
+    
+    return Response({'user': user_payload(user)})
 
 @api_view(['GET'])
 @ensure_csrf_cookie
@@ -648,3 +713,28 @@ def check_shop_risk(request):
         'source': provider,
         'disclaimer': disclaimer,
     })
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        shop_id = self.request.query_params.get('shop')
+        if shop_id:
+            queryset = queryset.filter(shop_id=shop_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_reviews(self, request):
+        reviews = self.get_queryset().filter(user=request.user)
+        page = self.paginate_queryset(reviews)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(reviews, many=True)
+        return Response(serializer.data)

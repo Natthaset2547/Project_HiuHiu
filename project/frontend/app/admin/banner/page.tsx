@@ -13,6 +13,7 @@ type Banner = {
   subtitle: string
   image: string
   link: string
+  button_type: 'shop' | 'website' | 'none'
   is_active: boolean
 }
 
@@ -27,6 +28,7 @@ export default function AdminBannerPage() {
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [link, setLink] = useState('')
+  const [buttonType, setButtonType] = useState<'shop' | 'website' | 'none'>('shop')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -60,6 +62,7 @@ export default function AdminBannerPage() {
       formData.append('title', title)
       formData.append('subtitle', subtitle)
       formData.append('link', link)
+      formData.append('button_type', buttonType)
       formData.append('is_active', 'true')
       const endpoint = editingId === null
         ? `${BACKEND_URL}/api/banners/`
@@ -78,6 +81,7 @@ export default function AdminBannerPage() {
       setTitle('')
       setSubtitle('')
       setLink('')
+      setButtonType('shop')
       setEditingId(null)
       const input = document.getElementById('banner-file') as HTMLInputElement | null
       if (input) input.value = ''
@@ -93,6 +97,7 @@ export default function AdminBannerPage() {
     setTitle(banner.title)
     setSubtitle(banner.subtitle)
     setLink(banner.link)
+    setButtonType(banner.button_type)
     setFile(null)
     const input = document.getElementById('banner-file') as HTMLInputElement | null
     if (input) input.value = ''
@@ -103,6 +108,7 @@ export default function AdminBannerPage() {
     setTitle('')
     setSubtitle('')
     setLink('')
+    setButtonType('shop')
     setFile(null)
   }
 
@@ -135,9 +141,14 @@ export default function AdminBannerPage() {
               <span className="text-sm text-muted-foreground">{file ? file.name : 'ยังไม่ได้เลือกไฟล์'}</span>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="หัวข้อแบนเนอร์ (ถ้ามี)" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
             <input value={link} onChange={(event) => setLink(event.target.value)} placeholder="ลิงก์ปลายทาง (ถ้ามี)" type="url" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+            <select value={buttonType} onChange={(e) => setButtonType(e.target.value as any)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none">
+              <option value="shop">แสดงปุ่ม: ไปยังร้านค้า</option>
+              <option value="website">แสดงปุ่ม: ไปยังเว็บไซต์</option>
+              <option value="none">ไม่แสดงปุ่ม</option>
+            </select>
           </div>
           <textarea value={subtitle} onChange={(event) => setSubtitle(event.target.value)} placeholder="คำอธิบาย (ถ้ามี)" className="min-h-20 w-full rounded-lg border border-border bg-background p-3 text-sm" />
           <div className="flex flex-wrap gap-2">
@@ -145,6 +156,45 @@ export default function AdminBannerPage() {
             {editingId !== null && <Button type="button" variant="outline" onClick={cancelEdit} className="gap-2 rounded-xl"><X className="size-4" />ยกเลิก</Button>}
           </div>
         </form>
+        {editingId !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-2xl rounded-2xl bg-card shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-border p-5">
+                <h2 className="text-xl font-bold">แก้ไขแบนเนอร์</h2>
+                <button type="button" onClick={cancelEdit} className="rounded-full p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition"><X className="size-5" /></button>
+              </div>
+              <div className="p-6">
+                <form onSubmit={uploadBanner} className="space-y-4 rounded-2xl  bg-card ">
+          <div>
+            <label htmlFor="banner-file" className="mb-1.5 block text-sm font-medium">ไฟล์รูปภาพ</label>
+            <div className="flex flex-wrap items-center gap-3">
+              <label htmlFor="banner-file" className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90">
+                <ImagePlus className="size-4" />
+                เลือกรูปภาพ
+              </label>
+                <input id="banner-file" required={editingId === null} type="file" accept="image/*" onChange={(event) => setFile(event.target.files?.[0] || null)} className="sr-only" />
+              <span className="text-sm text-muted-foreground">{file ? file.name : 'ยังไม่ได้เลือกไฟล์'}</span>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="หัวข้อแบนเนอร์ (ถ้ามี)" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+            <input value={link} onChange={(event) => setLink(event.target.value)} placeholder="ลิงก์ปลายทาง (ถ้ามี)" type="url" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+            <select value={buttonType} onChange={(e) => setButtonType(e.target.value as any)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none">
+              <option value="shop">แสดงปุ่ม: ไปยังร้านค้า</option>
+              <option value="website">แสดงปุ่ม: ไปยังเว็บไซต์</option>
+              <option value="none">ไม่แสดงปุ่ม</option>
+            </select>
+          </div>
+          <textarea value={subtitle} onChange={(event) => setSubtitle(event.target.value)} placeholder="คำอธิบาย (ถ้ามี)" className="min-h-20 w-full rounded-lg border border-border bg-background p-3 text-sm" />
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={saving} className="rounded-xl">{saving ? 'กำลังบันทึก...' : editingId === null ? 'อัปโหลดแบนเนอร์' : 'บันทึกการแก้ไข'}</Button>
+            {editingId !== null && <Button type="button" variant="outline" onClick={cancelEdit} className="gap-2 rounded-xl"><X className="size-4" />ยกเลิก</Button>}
+          </div>
+        </form>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="mt-8 grid gap-5 sm:grid-cols-2">
           {!loading && banners.map((banner) => (
             <article key={banner.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">

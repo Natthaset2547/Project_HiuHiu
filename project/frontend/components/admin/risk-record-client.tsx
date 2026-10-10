@@ -119,6 +119,7 @@ export function RiskRecordClient() {
         body: JSON.stringify({ status }),
       })
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
+      window.dispatchEvent(new Event('riskRecordsChanged'))
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'บันทึกสถานะไม่สำเร็จ')
     }
@@ -129,6 +130,7 @@ export function RiskRecordClient() {
     try {
       await apiRequest(`/api/risk-records/${id}/`, { method: 'DELETE' })
       setRows((prev) => prev.filter((r) => r.id !== id))
+      window.dispatchEvent(new Event('riskRecordsChanged'))
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'ลบข้อมูลไม่สำเร็จ')
     }
@@ -201,6 +203,7 @@ export function RiskRecordClient() {
       }
       
       setRows((prev) => [...newRecords, ...prev])
+      window.dispatchEvent(new Event('riskRecordsChanged'))
       
       setNewBankAccount('')
       setNewAccountOwner('')
@@ -423,7 +426,12 @@ export function RiskRecordClient() {
                   <div className="mt-2 text-xs text-muted-foreground">จาก: {row.source_name}</div>
                 </div>
                 <div className="min-w-0">
-                  <span className="font-semibold text-foreground break-all">{row.identifier}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground break-all">{row.identifier}</span>
+                    {row.status === 'pending' && (
+                      <div className="size-2 rounded-full bg-red-600 shrink-0 shadow-sm" title="รายการใหม่ รอตรวจสอบ" />
+                    )}
+                  </div>
                   {row.notes && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{row.notes}</p>}
                   {row.evidence_image && (
                     <a href={row.evidence_image} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">

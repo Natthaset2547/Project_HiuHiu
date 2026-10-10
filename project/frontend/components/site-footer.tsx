@@ -16,7 +16,7 @@ export function SiteFooter() {
           <span className="font-display text-lg font-bold text-foreground">HiuHiu</span>
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          แพลตฟอร์มรวมร้านรับหิ้วที่ไว้ใจได้ · ตรวจสอบก่อนสั่งซื้อทุกครั้ง
+          แพลตฟอร์มรวมร้านร้านค้าที่ไว้ใจได้ · ตรวจสอบก่อนสั่งซื้อทุกครั้ง
         </p>
         <nav className="flex items-center gap-4 text-xs text-muted-foreground">
           <Link href="/shops" className="transition hover:text-foreground">

@@ -17,8 +17,8 @@ const keywordMap: Record<string, string[]> = {
   'art toy': ['art toy', 'arttoy', 'ของเล่น', 'toy', 'กล่องสุ่ม', 'ฟิกเกอร์', 'โมเดล', 'ตุ๊กตา', 'popmart'],
   'ของใช้': ['ของใช้', 'แก้ว', 'แก้วน้ำ', 'กระติก', 'ไลฟ์สไตล์', 'จิปาถะ', 'ตกแต่งห้อง', 'เครื่องเขียน'],
   'ของกิน': ['ของกิน', 'อาหาร', 'food', 'ขนม', 'อร่อย', 'เบเกอรี่'],
-  'k-pop': ['k-pop', 'j-pop', 'kpop', 'ติ่ง', 'อัลบั้ม', 'การ์ด', 'คอนเสิร์ต', 'เกาหลี', 'แฟนคลับ'],
-  'รับหิ้ว': ['รับหิ้ว', 'พรีออเดอร์', 'preorder', 'pre-order', 'หิ้ว', 'รับกด', 'สั่งของ']
+  'k-pop': ['k-pop', 'j-pop', 'kpop', 'ติ่ง', 'อัลบั้ม', 'การ์ด', 'คอนเสิร์ต', 'ศิลปิน', 'แฟนคลับ'],
+  'ร้านค้า': ['ร้านค้า', 'พรีออเดอร์', 'preorder', 'pre-order', 'หิ้ว', 'รับกด', 'สั่งของ']
 }
 
 export function SearchClient({ query = '' }: { query?: string }) {
@@ -28,7 +28,7 @@ export function SearchClient({ query = '' }: { query?: string }) {
   const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/shops/`)
+    fetch(`${BACKEND_URL}/api/shops/`, { credentials: 'include' })
       .then((res) => {
         if (!res.ok) throw new Error('โหลดข้อมูลร้านค้าไม่สำเร็จ')
         return res.json()

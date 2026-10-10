@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Search, LogIn, LogOut, LayoutGrid, UserPlus } from 'lucide-react'
+import { Search, LogIn, LogOut, LayoutGrid, UserPlus, Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ReportModal } from '@/components/report-modal'
 import { BACKEND_URL } from '@/lib/api'
@@ -13,6 +13,7 @@ type CurrentUser = {
   username: string
   email: string
   is_staff: boolean
+  avatar?: string
 }
 
 export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
@@ -21,6 +22,7 @@ export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [pendingReportsCount, setPendingReportsCount] = useState(0)
 
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/auth/me/`, { credentials: 'include' })
@@ -32,6 +34,25 @@ export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
       .catch(() => setUser(null))
       .finally(() => setAuthChecked(true))
   }, [])
+
+  useEffect(() => {
+    function fetchPending() {
+      if (user?.is_staff) {
+        fetch(`${BACKEND_URL}/api/risk-records/`, { credentials: 'include' })
+          .then(async (response) => {
+            if (!response.ok) return
+            const data = await response.json()
+            const pending = data.filter((item: any) => item.status === 'pending').length
+            setPendingReportsCount(pending)
+          })
+          .catch(() => {})
+      }
+    }
+    fetchPending()
+    
+    window.addEventListener('riskRecordsChanged', fetchPending)
+    return () => window.removeEventListener('riskRecordsChanged', fetchPending)
+  }, [user?.is_staff])
 
   async function handleLogout() {
     const csrfResponse = await fetch(`${BACKEND_URL}/api/auth/csrf/`, {
@@ -81,9 +102,9 @@ export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
                 router.push(`/shops?${params.toString()}`)
               }
             }}
-            placeholder="ค้นหาร้านรับหิ้ว..."
+            placeholder="ค้นหาร้านค้า..."
             className="h-10 w-full rounded-full border border-border bg-muted/60 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:bg-background focus:ring-2 focus:ring-ring/25"
-            aria-label="ค้นหาร้านรับหิ้ว"
+            aria-label="ค้นหาร้านค้า"
           />
         </div>
 
@@ -102,10 +123,15 @@ export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
               render={<Link href="/admin" />}
               nativeButton={false}
               variant="ghost"
-              className="h-9 gap-2 px-3 text-muted-foreground"
+              className="h-9 gap-2 px-3 text-muted-foreground relative mr-1"
             >
               <LayoutGrid className="size-4" />
               <span className="hidden md:inline">จัดการหลังบ้าน</span>
+              {pendingReportsCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-sm border-2 border-background">
+                  {pendingReportsCount}
+                </span>
+              )}
             </Button>
           )}
           {authChecked && user ? (
@@ -115,9 +141,13 @@ export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
                 className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
                 title="โปรไฟล์ของฉัน"
               >
-                <span className="grid size-6 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                  {user.username.charAt(0).toUpperCase()}
-                </span>
+                {user.avatar ? (
+                    <img src={user.avatar} alt="Avatar" className="size-6 rounded-full object-cover border border-border shadow-sm" />
+                  ) : (
+                    <span className="grid size-6 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {user.username.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 <span className="hidden max-w-28 truncate sm:inline">{user.username}</span>
               </Link>
               <button

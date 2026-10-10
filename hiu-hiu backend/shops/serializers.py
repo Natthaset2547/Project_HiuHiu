@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 
 from rest_framework import serializers
-from .models import Banner, RiskRecord, RiskEvidence, Shop, normalize_risk_identifier
+from .models import Banner, RiskRecord, RiskEvidence, Shop, Review, normalize_risk_identifier
 
 
 class RiskEvidenceSerializer(serializers.ModelSerializer):
@@ -27,8 +27,27 @@ def normalize_shop_url(value):
     return normalized
 
 
+from django.db.models import Avg, Count
+
 class ShopSerializer(serializers.ModelSerializer):
+    is_favorited = serializers.SerializerMethodField()
     url = serializers.URLField(max_length=500)
+    average_rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
+
+    def get_average_rating(self, obj):
+        result = obj.reviews.aggregate(Avg('rating'))
+        return round(result['rating__avg'], 1) if result['rating__avg'] else 0.0
+
+    def get_review_count(self, obj):
+        return obj.reviews.count()
+
+    def get_is_favorited(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.favorited_by.filter(user=request.user).exists()
+        return False
+
 
     def validate_url(self, value):
         return normalize_shop_url(value)
@@ -65,3 +84,12 @@ class BannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banner
         fields = '__all__'
+
+class ReviewSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    shop_name = serializers.CharField(source='shop.name', read_only=True)
+
+    class Meta:
+        model = Review
+        fields = ['id', 'shop', 'shop_name', 'user', 'username', 'rating', 'comment', 'image', 'created_at']
+        read_only_fields = ['user']
