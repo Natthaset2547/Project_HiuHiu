@@ -36,6 +36,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-gwv$g#0g41e)zjsr&4t9g
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*'] # ยอมรับทุก Host ในโหมด Deploy ฟรี
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition

@@ -78,12 +78,18 @@ export function ShopCard({ shop }: { shop: Shop }) {
     'X (Twitter)': 'border-border bg-muted text-muted-foreground',
   }[platformName] || 'border-border bg-muted text-muted-foreground'
 
-  // 3. ซ่อมรูปภาพ: ถ้าไม่มีรูป ให้ใช้รูป Placeholder จากเว็บแทน จะได้สวยๆ
-  let imageUrl = 'https://placehold.co/600x400/eeeeee/999999?text=No+Image'
+  // 3. ซ่อมรูปภาพ: รองรับทั้งรูปใน public/media/shops (โหลดเร็วทั้งบน Local และ Vercel) และรูปที่อัปโหลดเข้า Backend
+  const fallbackImage = '/media/shops/antiscam_photo_1.jpg'
+  let imageUrl = fallbackImage
   if (shop.image) {
-    imageUrl = shop.image.startsWith('http') ? shop.image : `${BACKEND_URL}${shop.image}`
+    const rawImg = String(shop.image).replace('http://hiuhiu-backend.onrender.com', 'https://hiuhiu-backend.onrender.com')
+    const matchBuiltin = rawImg.match(/antiscam_(?:photo|case)_[0-9]+(?:_v2)?\.(?:jpg|png)$/i)
+    if (matchBuiltin) {
+      imageUrl = `/media/shops/${matchBuiltin[0]}`
+    } else {
+      imageUrl = rawImg.startsWith('http') ? rawImg : `${BACKEND_URL}${rawImg}`
+    }
   }
-  const fallbackImage = '/shops/cosmetics.png'
 
   // 4. ซ่อมลิงก์: ดึงข้อมูลจาก shop.url (ของ Django) หรือ shop.link (ของเก่า)
   // ใช้ (shop as any) เพื่อไม่ให้ TypeScript บ่นเวลาหาฟิลด์ url ไม่เจอในไฟล์ Type เดิม

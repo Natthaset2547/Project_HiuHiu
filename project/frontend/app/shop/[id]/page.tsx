@@ -102,11 +102,17 @@ export default function ShopDetailPage() {
 
   const normalizedPlatform = shop ? platformName(shop.platform) : 'Facebook'
   const status = shop ? statusLabels[shop.status] : statusLabels.pending
-  const imageUrl = shop?.image
-    ? shop.image.startsWith('http')
-      ? shop.image
-      : `${BACKEND_URL}${shop.image}`
-    : '/shops/cosmetics.png'
+  const fallbackImage = '/media/shops/antiscam_photo_1.jpg'
+  let imageUrl = fallbackImage
+  if (shop?.image) {
+    const rawImg = String(shop.image).replace('http://hiuhiu-backend.onrender.com', 'https://hiuhiu-backend.onrender.com')
+    const matchBuiltin = rawImg.match(/antiscam_(?:photo|case)_[0-9]+(?:_v2)?\.(?:jpg|png)$/i)
+    if (matchBuiltin) {
+      imageUrl = `/media/shops/${matchBuiltin[0]}`
+    } else {
+      imageUrl = rawImg.startsWith('http') ? rawImg : `${BACKEND_URL}${rawImg}`
+    }
+  }
 
   const dossier = parseDossier(shop?.description || null)
 
