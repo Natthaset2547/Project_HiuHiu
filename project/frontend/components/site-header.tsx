@@ -142,7 +142,12 @@ export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
                 title="โปรไฟล์ของฉัน"
               >
                 {user.avatar ? (
-                    <img src={user.avatar} alt="Avatar" className="size-6 rounded-full object-cover border border-border shadow-sm" />
+                    <img
+                      src={user.avatar}
+                      alt="Avatar"
+                      onError={() => setUser((prev) => (prev ? { ...prev, avatar: undefined } : prev))}
+                      className="size-6 rounded-full object-cover border border-border shadow-sm"
+                    />
                   ) : (
                     <span className="grid size-6 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                       {user.username.charAt(0).toUpperCase()}

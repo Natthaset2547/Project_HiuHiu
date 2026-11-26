@@ -470,13 +470,21 @@ def user_payload(user):
     from shops.models import UserProfile
     import os
     profile, _ = UserProfile.objects.get_or_create(user=user)
-    avatar_url = profile.avatar.url if profile.avatar else None
-    if avatar_url and not avatar_url.startswith('http'):
-        if os.environ.get('RENDER') or not settings.DEBUG:
-            base_url = 'https://hiuhiu-backend.onrender.com'
-        else:
-            base_url = 'http://localhost:8000'
-        avatar_url = f"{base_url}{avatar_url}"
+    avatar_url = None
+    if getattr(profile, 'avatar_base64', None):
+        avatar_url = profile.avatar_base64
+    elif profile.avatar and profile.avatar.name:
+        try:
+            if profile.avatar.storage.exists(profile.avatar.name):
+                avatar_url = profile.avatar.url
+                if avatar_url and not avatar_url.startswith('http'):
+                    if os.environ.get('RENDER') or not settings.DEBUG:
+                        base_url = 'https://hiuhiu-backend.onrender.com'
+                    else:
+                        base_url = 'http://localhost:8000'
+                    avatar_url = f"{base_url}{avatar_url}"
+        except Exception:
+            avatar_url = None
     return {
         'id': user.id,
         'username': user.username,
@@ -499,7 +507,20 @@ def update_profile(request):
 
     if avatar:
         from shops.models import UserProfile
+        import base64
+        import io
+        from PIL import Image
         profile, _ = UserProfile.objects.get_or_create(user=user)
+        try:
+            img = Image.open(avatar).convert('RGB')
+            img.thumbnail((256, 256), Image.Resampling.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, format='JPEG', quality=85, optimize=True)
+            b64_str = base64.b64encode(buf.getvalue()).decode('ascii')
+            profile.avatar_base64 = f"data:image/jpeg;base64,{b64_str}"
+        except Exception:
+            pass
+        avatar.seek(0)
         profile.avatar = avatar
         profile.save()
 

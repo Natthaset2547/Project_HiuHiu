@@ -183,6 +183,7 @@ class Favorite(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    avatar_base64 = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} Profile"

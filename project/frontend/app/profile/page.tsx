@@ -169,7 +169,12 @@ export default function ProfilePage() {
             <aside className="w-full md:w-64 shrink-0">
               <section className="w-full rounded-3xl border border-border bg-card p-6 shadow-sm text-center">
                 {user.avatar ? (
-                  <img src={user.avatar} alt="Avatar" className="mx-auto size-20 rounded-full object-cover border-2 border-border shadow-sm" />
+                  <img
+                    src={user.avatar}
+                    alt="Avatar"
+                    onError={() => setUser((prev) => (prev ? { ...prev, avatar: undefined } : prev))}
+                    className="mx-auto size-20 rounded-full object-cover border-2 border-border shadow-sm"
+                  />
                 ) : (
                   <span className="mx-auto grid size-20 place-items-center rounded-full bg-primary text-3xl font-bold text-primary-foreground">
                     {user.username.charAt(0).toUpperCase()}
@@ -316,7 +321,12 @@ export default function ProfilePage() {
                         {editAvatar ? (
                           <img src={URL.createObjectURL(editAvatar)} alt="New Avatar" className="size-16 rounded-full object-cover border border-border" />
                         ) : user.avatar ? (
-                          <img src={user.avatar} alt="Avatar" className="size-16 rounded-full object-cover border border-border" />
+                          <img
+                            src={user.avatar}
+                            alt="Avatar"
+                            onError={() => setUser((prev) => (prev ? { ...prev, avatar: undefined } : prev))}
+                            className="size-16 rounded-full object-cover border border-border"
+                          />
                         ) : (
                           <span className="grid size-16 place-items-center rounded-full bg-primary/20 text-xl font-bold text-primary">
                             {user.username.charAt(0).toUpperCase()}

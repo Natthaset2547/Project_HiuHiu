@@ -137,6 +137,21 @@ def update_cloud():
             )
 
     Shop.objects.exclude(id__in=kept_ids).delete()
+
+    # Ensure existing on-disk avatars are backed up into avatar_base64 if not already set
+    try:
+        import base64
+        from shops.models import UserProfile
+        for prof in UserProfile.objects.all():
+            if not prof.avatar_base64 and prof.avatar and prof.avatar.name:
+                if prof.avatar.storage.exists(prof.avatar.name):
+                    with prof.avatar.open('rb') as f:
+                        b64 = base64.b64encode(f.read()).decode('ascii')
+                        prof.avatar_base64 = f"data:image/jpeg;base64,{b64}"
+                        prof.save()
+    except Exception as e:
+        print("Avatar base64 init skipped:", e)
+
     print(f"DB updated with {len(kept_ids)} anti-scam cases and {Review.objects.count()} comments.")
 
 if __name__ == '__main__':
