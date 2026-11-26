@@ -11,7 +11,7 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
-from .models import Banner, RiskRecord, RiskEvidence, Shop, Review, Favorite, normalize_risk_identifier
+from .models import Banner, RiskRecord, RiskEvidence, Shop, Review, ReviewImage, Favorite, normalize_risk_identifier
 from .serializers import BannerSerializer, RiskRecordSerializer, ShopSerializer, ReviewSerializer
 
 
@@ -389,6 +389,15 @@ class IsStaff(BasePermission):
         return request.user.is_authenticated and request.user.is_staff
 
 
+class IsStaffOrCreateOrReadOnly(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return True
+        if request.method == 'POST':
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated and request.user.is_staff
+
+
 class ShopViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def toggle_favorite(self, request, pk=None):
@@ -405,9 +414,19 @@ class ShopViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(shops, many=True)
         return Response(serializer.data)
 
-    queryset = Shop.objects.all()
+    def perform_create(self, serializer):
+        import uuid
+        url_val = self.request.data.get('url', '').strip()
+        if not url_val:
+            url_val = f"https://hiuhiu.local/case-{uuid.uuid4().hex[:10]}"
+        instance = serializer.save(url=url_val)
+        if not instance.image:
+            instance.image.name = 'shops/antiscam_case_1.png'
+            instance.save()
+
+    queryset = Shop.objects.all().order_by('-id')
     serializer_class = ShopSerializer
-    permission_classes = [IsStaffOrReadOnly]
+    permission_classes = [IsStaffOrCreateOrReadOnly]
 
 
 class RiskRecordViewSet(viewsets.ModelViewSet):
@@ -732,7 +751,25 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        review = serializer.save(user=self.request.user)
+        extra_images = self.request.FILES.getlist('images')
+        for img in extra_images:
+            ReviewImage.objects.create(review=review, image=img)
+
+    def perform_update(self, serializer):
+        review = serializer.save()
+        keep_ids_raw = self.request.data.get('keep_image_ids')
+        if keep_ids_raw is not None:
+            keep_ids = [int(x) for x in str(keep_ids_raw).split(',') if x.strip().isdigit()]
+            review.images.exclude(id__in=keep_ids).delete()
+        if str(self.request.data.get('clear_legacy_image', '')).lower() == 'true':
+            if review.image:
+                review.image.delete(save=False)
+                review.image = None
+                review.save()
+        extra_images = self.request.FILES.getlist('images')
+        for img in extra_images:
+            ReviewImage.objects.create(review=review, image=img)
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_reviews(self, request):

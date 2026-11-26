@@ -36,7 +36,7 @@ export default function AdminPage() {
       <SiteHeader />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <p className="mb-4 text-sm text-muted-foreground">
-          หน้าจัดการสำหรับแอดมิน — จัดการร้านค้าปลอดภัยและประวัติคนโกง
+          หน้าจัดการสำหรับแอดมิน — จัดการคลังเคสเตือนภัยกลโกงและประวัติบัญชีคนโกง
         </p>
         
         <div className="mb-6 flex flex-wrap gap-3 items-center border-b border-border pb-4">
@@ -46,7 +46,7 @@ export default function AdminPage() {
             className="rounded-xl gap-2 font-semibold"
           >
             <Store className="size-4" />
-            ร้านค้าปลอดภัย (Whitelist)
+            คลังเคสเตือนภัยกลโกง (Scam Cases)
           </Button>
           <Button 
             onClick={() => setActiveTab('blacklist')}
@@ -54,7 +54,7 @@ export default function AdminPage() {
             className="rounded-xl gap-2 font-semibold relative"
           >
             <AlertTriangle className="size-4" />
-            ประวัติเตือนภัย (Blacklist)
+            ประวัติคนโกง/เบาะแส (Blacklist)
             {pendingReportsCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white shadow-sm border-2 border-background">
                 {pendingReportsCount}

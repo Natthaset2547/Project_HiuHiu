@@ -180,13 +180,8 @@ export function AdminClient() {
     setError('')
     try {
       const name = draftName.trim()
-      const trimmedUrl = draftUrl.trim()
+      const trimmedUrl = draftUrl.trim() || `https://hiuhiu.local/case-${id}`
       if (!name) return
-
-      if (!isValidExternalUrl(trimmedUrl)) {
-        setError('URL ร้านค้าไม่ถูกต้อง ต้องเป็นลิงก์ที่มี http:// หรือ https:// เช่น https://facebook.com/yourpage')
-        return
-      }
 
       const platform = draftPlatform === 'Facebook' ? 'facebook' : draftPlatform === 'Instagram' ? 'instagram' : 'x_twitter'
       const normalizedUrl = /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`
@@ -231,15 +226,10 @@ export function AdminClient() {
     setError('')
 
     const trimmedName = newName.trim()
-    const trimmedUrl = newUrl.trim()
+    const trimmedUrl = newUrl.trim() || `https://hiuhiu.local/case-${Date.now()}`
 
     if (!trimmedName) {
-      setError('กรุณากรอกชื่อร้านค้า')
-      return
-    }
-
-    if (!isValidExternalUrl(trimmedUrl)) {
-      setError('URL ร้านค้าไม่ถูกต้อง ต้องเป็นลิงก์ที่มี http:// หรือ https:// เช่น https://facebook.com/yourpage')
+      setError('กรุณากรอกหัวข้อเคสเตือนภัย')
       return
     }
 
@@ -301,14 +291,14 @@ export function AdminClient() {
           </span>
           <div>
             <h1 className="font-display text-xl font-bold text-foreground">
-              จัดการร้านค้า (Whitelist)
+              จัดการคลังเคสเตือนภัยกลโกง (Scam Cases)
             </h1>
-            <p className="text-sm text-muted-foreground">จัดการรายชื่อร้านค้าใน Whitelist</p>
+            <p className="text-sm text-muted-foreground">เพิ่ม แก้ไข หรือจัดการบทความเคสตัวอย่างกลโกงรอบตัวเพื่อเตือนภัยผู้ใช้งาน</p>
           </div>
         </div>
         <Button onClick={() => setAdding((v) => !v)} className="h-10 gap-2 rounded-xl px-4">
           <Plus className="size-4" />
-          เพิ่มร้านค้า
+          เพิ่มเคสเตือนภัย
         </Button>
       </div>
 
@@ -317,33 +307,20 @@ export function AdminClient() {
           onSubmit={addShop}
           className="grid gap-3 border-b border-border bg-muted/40 p-6 md:grid-cols-2"
         >
-          <div>
+          <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              ชื่อร้านค้า
+              หัวข้อเคสเตือนภัยกลโกง
             </label>
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="ชื่อร้านค้าใหม่"
+              placeholder="เช่น เตือนภัย! หลอกขายบัตรคอนเสิร์ตใน X"
               className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/25"
             />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              URL ร้านค้า
-            </label>
-            <input
-              required
-              type="url"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              placeholder="https://facebook.com/..."
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/25"
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              แพลตฟอร์ม
+              แพลตฟอร์มที่พบการระบาด
             </label>
             <select
               value={newPlatform}
@@ -360,7 +337,7 @@ export function AdminClient() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              สถานะความปลอดภัย
+              ระดับความรุนแรงของกลโกง
             </label>
             <select
               value={newStatus}
@@ -368,28 +345,28 @@ export function AdminClient() {
               className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-ring/25"
               style={statusOptionStyle[newStatus]}
             >
-              <option value="safe" style={statusOptionStyle.safe}>ปลอดภัย</option>
-              <option value="watch" style={statusOptionStyle.watch}>รอยืนยัน</option>
-              <option value="caution" style={statusOptionStyle.caution}>มิจฉาชีพ</option>
+              <option value="safe" style={statusOptionStyle.safe}>แนวทางป้องกัน</option>
+              <option value="watch" style={statusOptionStyle.watch}>เฝ้าระวังระบาด</option>
+              <option value="caution" style={statusOptionStyle.caution}>อันตรายสูง</option>
             </select>
           </div>
 
           <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              คำอธิบายร้านค้า
+              รายละเอียดรูปแบบกลโกง & วิธีป้องกัน
             </label>
             <textarea
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
               rows={3}
-              placeholder="ใส่รายละเอียดเพิ่มเติมของร้านค้า"
+              placeholder="อธิบายพฤติกรรมของมิจฉาชีพ จุดสังเกต และวิธีป้องกันตัว"
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/25"
             />
           </div>
 
           <div className="md:col-span-2">
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              รูปร้านค้า
+              รูปภาพประกอบเคสเตือนภัย
             </label>
             <input
               type="file"
@@ -422,9 +399,9 @@ export function AdminClient() {
 
       {/* header row */}
       <div className="hidden grid-cols-[2fr_1.2fr_1.2fr_1fr] gap-4 px-6 py-3 text-xs font-medium text-muted-foreground md:grid">
-        <span>ชื่อร้านค้า</span>
-        <span>แพลตฟอร์ม</span>
-        <span>สถานะ</span>
+        <span>หัวข้อเคสเตือนภัย</span>
+        <span>ช่องทางที่ระบาด</span>
+        <span>ระดับความรุนแรง</span>
         <span className="text-right">การจัดการ</span>
       </div>
 
@@ -513,9 +490,9 @@ export function AdminClient() {
                   style={statusOptionStyle[draftStatus]}
                   aria-label={`สถานะที่แก้ไขของ ${row.name}`}
                 >
-                  <option value="safe" style={statusOptionStyle.safe}>ปลอดภัย</option>
-                  <option value="watch" style={statusOptionStyle.watch}>รอยืนยัน</option>
-                  <option value="caution" style={statusOptionStyle.caution}>มิจฉาชีพ</option>
+                  <option value="safe" style={statusOptionStyle.safe}>แนวทางป้องกัน</option>
+                  <option value="watch" style={statusOptionStyle.watch}>เฝ้าระวังระบาด</option>
+                  <option value="caution" style={statusOptionStyle.caution}>อันตรายสูง</option>
                 </select>
               ) : (
                 <select
@@ -525,9 +502,9 @@ export function AdminClient() {
                   style={statusOptionStyle[row.status]}
                   aria-label={`สถานะของ ${row.name}`}
                 >
-                  <option value="safe" style={statusOptionStyle.safe}>ปลอดภัย</option>
-                  <option value="watch" style={statusOptionStyle.watch}>รอยืนยัน</option>
-                  <option value="caution" style={statusOptionStyle.caution}>มิจฉาชีพ</option>
+                  <option value="safe" style={statusOptionStyle.safe}>แนวทางป้องกัน</option>
+                  <option value="watch" style={statusOptionStyle.watch}>เฝ้าระวังระบาด</option>
+                  <option value="caution" style={statusOptionStyle.caution}>อันตรายสูง</option>
                 </select>
               )}
             </div>

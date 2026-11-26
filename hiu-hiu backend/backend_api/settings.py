@@ -85,15 +85,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend_api.wsgi.application'
 
 
-# Database
+# Database (SQLite local by default, or PostgreSQL/MySQL via DATABASE_URL)
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'mysql://root:@127.0.0.1:3306/hiuhiu_db'),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    } if not os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URL', '').startswith('sqlite') else dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
     ),
-    'local_mysql': dj_database_url.parse('mysql://root:@127.0.0.1:3306/hiuhiu_db')
 }
 
 

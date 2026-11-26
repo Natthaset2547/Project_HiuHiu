@@ -1,6 +1,6 @@
 'use client'
 
-import { ExternalLink, Star, Heart } from 'lucide-react'
+import { ExternalLink, MessageSquare, Heart } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PlatformIcon } from '@/components/platform-icon'
@@ -44,7 +44,7 @@ export function ShopCard({ shop }: { shop: Shop }) {
         const data = await res.json()
         setIsFavorited(data.status === 'favorited')
       } else if (res.status === 401 || res.status === 403) {
-        alert('กรุณาเข้าสู่ระบบเพื่อบันทึกร้านโปรด')
+        alert('กรุณาเข้าสู่ระบบเพื่อบันทึกเคสเตือนภัยที่สนใจ')
       }
     } catch (e) {
       console.error(e)
@@ -108,7 +108,7 @@ export function ShopCard({ shop }: { shop: Shop }) {
           onClick={toggleFavorite}
           disabled={loadingFav}
           className="absolute left-3 top-3 z-10 grid size-8 place-items-center rounded-full bg-white shadow-md border border-gray-200 transition hover:scale-110 disabled:opacity-50 dark:bg-zinc-900/80 dark:border-zinc-700"
-          title="บันทึกร้านโปรด"
+          title="บันทึกเคสเตือนภัยนี้ไว้ดู"
         >
           <Heart className={`size-4 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`} />
         </button>
@@ -123,7 +123,7 @@ export function ShopCard({ shop }: { shop: Shop }) {
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <a href={`/shop/${shop.id}`} className="inline-block font-display text-base font-semibold leading-snug text-foreground text-pretty hover:text-primary">
-            {shop.name || 'ไม่มีชื่อร้าน'}
+            {shop.name || 'ไม่มีชื่อเคสเตือนภัย'}
           </a>
           <span className={`ml-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${platformStyles}`}>
             <PlatformIcon platform={platformName as any} className="size-3.5" />
@@ -131,40 +131,27 @@ export function ShopCard({ shop }: { shop: Shop }) {
           </span>
         </div>
         
-        {/* Review Stars */}
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Star className="size-3.5 fill-yellow-400 text-yellow-400" />
-          <span className="font-semibold text-foreground">
-            {(shop as any).average_rating > 0 ? (shop as any).average_rating : 'ไม่มีคะแนน'}
-          </span>
-          <span>
-            ({(shop as any).review_count || 0} รีวิว)
+        {/* Comment Count */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <MessageSquare className="size-3.5 text-primary" />
+          <span className="font-medium text-foreground">
+            {(shop as any).review_count > 0
+              ? `${(shop as any).review_count} ความคิดเห็นเตือนภัย`
+              : 'ยังไม่มีความคิดเห็น'}
           </span>
         </div>
 
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          {shop.description || 'ไม่มีคำอธิบายสำหรับร้านค้านี้'}
+        <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">
+          {(shop.description || 'ไม่มีคำอธิบายสำหรับเคสเตือนภัยนี้')
+            .replace(/\s*\[Tags:[^\]]*\]/gi, '')
+            .split('---STEPS---')[0]
+            .trim()}
         </p>
         <a
-          href={targetUrl}
-          target={hasValidExternalUrl ? '_blank' : '_self'}
-          rel={hasValidExternalUrl ? 'noopener noreferrer' : undefined}
-          onClick={(event) => {
-            if (!hasValidExternalUrl) {
-              event.preventDefault()
-            }
-          }}
-          className={`mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-medium transition ${
-            hasValidExternalUrl
-              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'pointer-events-none cursor-default bg-muted text-muted-foreground'
-          }`}
+          href={`/shop/${shop.id}`}
+          className="mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
         >
-          {hasValidExternalUrl ? 'ไปที่ร้านค้า' : 'ดูรายละเอียดร้านค้า'}
-          {hasValidExternalUrl && <ExternalLink className="size-4" />}
-        </a>
-        <a href={`/shop/${shop.id}`} className="text-center text-xs font-medium text-muted-foreground hover:text-primary hover:underline">
-          ดูรายละเอียดร้านค้า
+          อ่านวิธีสังเกต & ป้องกัน
         </a>
       </div>
     </article>

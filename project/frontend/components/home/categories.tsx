@@ -4,7 +4,7 @@ import { categories } from '@/lib/data'
 export function Categories() {
   return (
     <section>
-      <h2 className="mb-4 font-display text-lg font-semibold text-foreground">หมวดหมู่สินค้า</h2>
+      <h2 className="mb-4 font-display text-lg font-semibold text-foreground">หมวดหมู่กลโกงรอบตัว (แยกตามรูปแบบการหลอกลวง)</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-9">
         {categories.map(({ slug, label, icon: Icon }) => (
           <Link

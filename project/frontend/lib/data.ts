@@ -33,17 +33,17 @@ export type Shop = {
 
 export const shops: Shop[] = []
 
-// หมวดหมู่
+// หมวดหมู่กลโกงรอบตัว
 export const categories: Category[] = [
-  { slug: 'ทั้งหมด', label: 'ร้านค้าทั้งหมด', icon: Store },
-  { slug: 'แฟชั่น', label: 'แฟชั่น/เสื้อผ้า/เครื่องแต่งกาย', icon: Shirt }, 
-  { slug: 'สกินแคร์', label: 'เครื่องสำอาง/สกินแคร์', icon: Sparkles },
-  { slug: 'กระเป๋า', label: 'กระเป๋า', icon: ShoppingBag }, 
-  { slug: 'art toy', label: 'ของเล่น/Art Toy', icon: Gamepad2 },
-  { slug: 'ของใช้', label: 'ของใช้/แก้วน้ำ/จิปาถะ', icon: Coffee },
-  { slug: 'ของกิน', label: 'อาหารเสริม/ของกิน', icon: Cookie },
-  { slug: 'k-pop', label: 'สินค้า K-Pop/J-Pop', icon: Music },
-  { slug: 'ร้านค้า', label: 'พรีออเดอร์/อื่นๆ', icon: Package },
+  { slug: 'ทั้งหมด', label: 'กลโกงทั้งหมด', icon: Store },
+  { slug: 'แฟชั่น', label: 'หลอกขายเสื้อผ้า/แฟชั่น', icon: Shirt }, 
+  { slug: 'สกินแคร์', label: 'สกินแคร์ปลอม/ครีมทิพย์', icon: Sparkles },
+  { slug: 'กระเป๋า', label: 'หลอกขายแบรนด์เนม/กระเป๋า', icon: ShoppingBag }, 
+  { slug: 'art toy', label: 'หลอกพรีออเดอร์/Art Toy', icon: Gamepad2 },
+  { slug: 'ของใช้', label: 'หลอกเช่าหอพัก/ของใช้', icon: Coffee },
+  { slug: 'ของกิน', label: 'หลอกสั่งอาหาร/คูปองทิพย์', icon: Cookie },
+  { slug: 'k-pop', label: 'หลอกขายบัตรคอน/K-Pop', icon: Music },
+  { slug: 'ร้านค้า', label: 'งานเสริมทิพย์/คอลเซ็นเตอร์', icon: Package },
 ]
 
 export const statusConfig: Record<
@@ -51,17 +51,17 @@ export const statusConfig: Record<
   { label: string; className: string; dotClassName: string }
 > = {
   safe: {
-    label: 'ปลอดภัย',
+    label: 'แนวทางป้องกัน',
     className: 'bg-safe text-safe-foreground',
     dotClassName: 'bg-safe-foreground',
   },
   watch: {
-    label: 'กำลังตรวจสอบ',
+    label: 'เฝ้าระวังระบาด',
     className: 'bg-warn text-warn-foreground',
     dotClassName: 'bg-warn-foreground',
   },
   caution: {
-    label: 'มิจฉาชีพ',
+    label: 'อันตรายสูง',
     className: 'bg-danger text-danger-foreground',
     dotClassName: 'bg-danger-foreground',
   },

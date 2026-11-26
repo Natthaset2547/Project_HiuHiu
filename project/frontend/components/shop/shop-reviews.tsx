@@ -4,12 +4,18 @@ import { useState, useEffect, useMemo } from 'react'
 import { Star, User, Trash2, ChevronLeft, ChevronRight, ImagePlus, X, Edit2 } from 'lucide-react'
 import { BACKEND_URL } from '@/lib/api'
 
+type ReviewImageItem = {
+  id: number
+  image: string
+}
+
 type Review = {
   id: number
   username: string
   rating: number
   comment: string
   image?: string | null
+  images?: ReviewImageItem[]
   created_at: string
 }
 
@@ -41,10 +47,11 @@ export function ShopReviews({ shopId }: ShopReviewsProps) {
 
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
-  const [image, setImage] = useState<File | null>(null)
+  const [newImages, setNewImages] = useState<File[]>([])
   
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null)
   const [existingImage, setExistingImage] = useState<string | null>(null)
+  const [existingExtraImages, setExistingExtraImages] = useState<ReviewImageItem[]>([])
   
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -91,10 +98,14 @@ export function ShopReviews({ shopId }: ShopReviewsProps) {
       formData.append('shop', shopId.toString())
       formData.append('rating', rating.toString())
       formData.append('comment', comment)
-      if (image) {
-        formData.append('image', image)
-      } else if (existingImage === null && editingReviewId) {
-        formData.append('image', '')
+      newImages.forEach((file) => {
+        formData.append('images', file)
+      })
+      if (editingReviewId) {
+        formData.append('keep_image_ids', existingExtraImages.map((img) => img.id).join(','))
+        if (existingImage === null) {
+          formData.append('clear_legacy_image', 'true')
+        }
       }
 
       const url = editingReviewId 
@@ -113,12 +124,13 @@ export function ShopReviews({ shopId }: ShopReviewsProps) {
       if (res.ok) {
         setComment('')
         setRating(5)
-        setImage(null)
+        setNewImages([])
         setEditingReviewId(null)
         setExistingImage(null)
+        setExistingExtraImages([])
         fetchReviews()
       } else {
-        setError('ไม่สามารถส่งรีวิวได้ อาจจะซ้ำหรือเกิดข้อผิดพลาด')
+        setError('ไม่สามารถส่งความคิดเห็นได้ อาจจะซ้ำหรือเกิดข้อผิดพลาด')
       }
     } catch (e) {
       setError('เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ')
@@ -132,15 +144,17 @@ export function ShopReviews({ shopId }: ShopReviewsProps) {
     setRating(r.rating)
     setComment(r.comment)
     setExistingImage(r.image || null)
-    setImage(null)
+    setExistingExtraImages(r.images || [])
+    setNewImages([])
   }
 
   function cancelEdit() {
     setEditingReviewId(null)
     setComment('')
     setRating(5)
-    setImage(null)
+    setNewImages([])
     setExistingImage(null)
+    setExistingExtraImages([])
   }
 
   async function handleDelete(reviewId: number) {
@@ -189,40 +203,98 @@ export function ShopReviews({ shopId }: ShopReviewsProps) {
   // สร้าง Form Component แยกออกมาให้เรียกใช้ง่ายๆ ทั้ง Create และ Edit
   const renderReviewForm = () => (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
-      <div className="flex items-center gap-2">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button key={star} type="button" onClick={() => setRating(star)} className="transition hover:scale-110">
-            <Star className={`size-6 ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-muted text-muted-foreground'}`} />
-          </button>
-        ))}
-        <span className="ml-2 text-sm text-muted-foreground">{rating} ดาว</span>
-      </div>
       <textarea
         className="min-h-[100px] w-full rounded-xl border border-input bg-transparent px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        placeholder="ร้านนี้เป็นยังไงบ้าง? สินค้าตรงปกไหม? จัดส่งเร็วหรือเปล่า?"
+        placeholder="คุณเคยเจอกลโกงรูปแบบนี้ไหม? แชร์ประสบการณ์ จุดสังเกต หรือแนบรูปแชทเพื่อเตือนภัยเพื่อนๆ..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         required
       />
-      <div>
-        {!image && !existingImage ? (
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted/50">
-            <ImagePlus className="size-4" /> เพิ่มรูปภาพหลักฐาน
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files && e.target.files[0]) setImage(e.target.files[0]) }} />
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-muted/50 hover:text-foreground">
+            <ImagePlus className="size-4" /> เพิ่มรูปภาพหลักฐาน / ตัวอย่างแชท (เพิ่มได้หลายรูป)
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || [])
+                if (files.length > 0) {
+                  setNewImages((prev) => [...prev, ...files])
+                }
+                e.currentTarget.value = ''
+              }}
+            />
           </label>
-        ) : (
-          <div className="relative inline-block overflow-hidden rounded-xl border border-border bg-muted">
-            <img src={image ? URL.createObjectURL(image) : (existingImage?.startsWith('http') ? existingImage : `${BACKEND_URL}${existingImage}`)} alt="Preview" className="h-24 w-auto object-cover" />
-            <button type="button" onClick={() => { setImage(null); setExistingImage(null); }} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/50 text-white hover:bg-black/70">
-              <X className="size-3" />
-            </button>
+          {(existingImage || existingExtraImages.length > 0 || newImages.length > 0) && (
+            <span className="text-xs text-muted-foreground">
+              แนบแล้ว {(existingImage ? 1 : 0) + existingExtraImages.length + newImages.length} รูป
+            </span>
+          )}
+        </div>
+
+        {(existingImage || existingExtraImages.length > 0 || newImages.length > 0) && (
+          <div className="flex flex-wrap gap-3">
+            {existingImage && (
+              <div className="relative inline-block overflow-hidden rounded-xl border border-border bg-muted">
+                <img
+                  src={existingImage.startsWith('http') ? existingImage : `${BACKEND_URL}${existingImage}`}
+                  alt="Existing preview"
+                  className="h-24 w-24 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setExistingImage(null)}
+                  className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                  title="ลบรูปนี้"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            )}
+            {existingExtraImages.map((item) => (
+              <div key={item.id} className="relative inline-block overflow-hidden rounded-xl border border-border bg-muted">
+                <img
+                  src={item.image.startsWith('http') ? item.image : `${BACKEND_URL}${item.image}`}
+                  alt="Existing preview"
+                  className="h-24 w-24 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setExistingExtraImages((prev) => prev.filter((img) => img.id !== item.id))}
+                  className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                  title="ลบรูปนี้"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
+            {newImages.map((file, idx) => (
+              <div key={idx} className="relative inline-block overflow-hidden rounded-xl border border-border bg-muted">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={`New preview ${idx + 1}`}
+                  className="h-24 w-24 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setNewImages((prev) => prev.filter((_, i) => i !== idx))}
+                  className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                  title="ลบรูปนี้"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
       {error && <p className="text-sm font-medium text-red-500">{error}</p>}
       <div className="flex gap-3">
         <button type="submit" disabled={submitting} className="inline-flex h-9 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50">
-          {submitting ? (editingReviewId ? 'กำลังบันทึก...' : 'กำลังส่ง...') : (editingReviewId ? 'บันทึกการแก้ไข' : 'ส่งรีวิว')}
+          {submitting ? (editingReviewId ? 'กำลังบันทึก...' : 'กำลังส่ง...') : (editingReviewId ? 'บันทึกการแก้ไข' : 'ส่งความคิดเห็นเตือนภัย')}
         </button>
         {editingReviewId && (
           <button type="button" onClick={cancelEdit} className="inline-flex h-9 items-center justify-center rounded-full border border-border bg-transparent px-6 text-sm font-medium text-foreground hover:bg-muted">
@@ -234,49 +306,29 @@ export function ShopReviews({ shopId }: ShopReviewsProps) {
   )
 
   return (
-    <div className="mt-12 w-full">
-      <h2 className="mb-6 font-display text-xl font-bold">คะแนนของร้านค้า</h2>
-
-      <div className="mb-8 flex flex-col gap-6 rounded-2xl border border-primary/20 bg-primary/5 p-6 shadow-sm sm:flex-row sm:items-center dark:border-primary/20 dark:bg-primary/10">
-        <div className="flex flex-col items-center justify-center sm:w-1/3 sm:border-r sm:border-primary/20 dark:sm:border-primary/20">
-          <div className="flex items-baseline gap-1 text-primary">
-            <span className="text-4xl font-bold">{stats.avg}</span>
-            <span className="text-lg">เต็ม 5</span>
-          </div>
-          <div className="mt-2 flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star key={star} className={`size-5 ${star <= Math.round(Number(stats.avg)) ? 'fill-primary text-primary' : 'fill-transparent text-primary/30'}`} />
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2 sm:w-2/3 sm:pl-4">
-          <button onClick={() => setFilterRating('all')} className={`rounded-sm border px-4 py-1.5 text-sm ${filterRating === 'all' ? 'border-primary text-primary' : 'border-border bg-background text-foreground hover:border-primary hover:text-primary'}`}>
-            ทั้งหมด ({stats.total})
-          </button>
-          {[5, 4, 3, 2, 1].map((star) => (
-            <button key={star} onClick={() => setFilterRating(star)} className={`rounded-sm border px-4 py-1.5 text-sm ${filterRating === star ? 'border-primary text-primary' : 'border-border bg-background text-foreground hover:border-primary hover:text-primary'}`}>
-              {star} ดาว ({stats.counts[star as keyof typeof stats.counts]})
-            </button>
-          ))}
-        </div>
+    <div className="mt-8 w-full">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-display text-xl font-bold">
+          💬 ความคิดเห็น & ประสบการณ์เตือนภัยจากผู้ใช้งาน ({stats.total})
+        </h2>
       </div>
 
       {currentUser && !hasReviewed && !editingReviewId && (
         <div className="mb-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="mb-4 font-semibold">เขียนรีวิวของคุณ</h3>
+          <h3 className="mb-4 font-semibold">ร่วมแชร์ประสบการณ์หรือเบาะแสเพิ่มเติม</h3>
           {renderReviewForm()}
         </div>
       )}
 
       {!currentUser && (
         <div className="mb-8 rounded-2xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-          กรุณาเข้าสู่ระบบเพื่อเขียนรีวิว
+          กรุณาเข้าสู่ระบบเพื่อร่วมแชร์ประสบการณ์เตือนภัย
         </div>
       )}
 
       <div className="flex flex-col gap-6">
         {paginatedReviews.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">ยังไม่มีรีวิวในหมวดหมู่นี้</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">ยังไม่มีความคิดเห็นในเคสนี้ มาร่วมแชร์ข้อมูลเตือนภัยเป็นคนแรกได้เลย</div>
         ) : (
           paginatedReviews.map((r) => (
             <div key={r.id} className="border-b border-border pb-6 last:border-0">
@@ -293,19 +345,47 @@ export function ShopReviews({ shopId }: ShopReviewsProps) {
                 ) : (
                   <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                     <div className="flex-1">
-                      <p className="font-medium text-foreground">{r.username}</p>
-                      <div className="mt-1 flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className={`size-3.5 ${star <= r.rating ? 'fill-primary text-primary' : 'fill-muted text-muted-foreground'}`} />
-                        ))}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-foreground">{r.username}</p>
+                        <span className="text-xs text-muted-foreground">
+                          • {new Date(r.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {new Date(r.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
                       <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap">{r.comment}</p>
-                      {r.image && (
-                        <div className="mt-3 overflow-hidden rounded-xl border border-border sm:max-w-sm">
-                          <img src={r.image.startsWith('http') ? r.image : `${BACKEND_URL}${r.image}`} alt="Review attached" className="max-h-60 w-full object-cover bg-muted" />
+                      {(r.image || (r.images && r.images.length > 0)) && (
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          {r.image && (
+                            <a
+                              href={r.image.startsWith('http') ? r.image : `${BACKEND_URL}${r.image}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="overflow-hidden rounded-xl border border-border transition hover:opacity-90"
+                            >
+                              <img
+                                src={r.image.startsWith('http') ? r.image : `${BACKEND_URL}${r.image}`}
+                                alt="Review attached"
+                                className="h-36 w-36 object-cover bg-muted sm:h-44 sm:w-44"
+                              />
+                            </a>
+                          )}
+                          {r.images?.map((item) => {
+                            const fullUrl = item.image.startsWith('http') ? item.image : `${BACKEND_URL}${item.image}`
+                            return (
+                              <a
+                                key={item.id}
+                                href={fullUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="overflow-hidden rounded-xl border border-border transition hover:opacity-90"
+                              >
+                                <img
+                                  src={fullUrl}
+                                  alt="Review attached"
+                                  className="h-36 w-36 object-cover bg-muted sm:h-44 sm:w-44"
+                                />
+                              </a>
+                            )
+                          })}
                         </div>
                       )}
                     </div>

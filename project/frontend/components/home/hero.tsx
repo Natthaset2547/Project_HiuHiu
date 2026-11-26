@@ -17,11 +17,11 @@ type Banner = {
 
 const fallbackBanner: Banner = {
   id: 0,
-  title: 'รวมร้านค้าที่ไว้ใจได้',
-  subtitle: 'ค้นหาร้านค้าจากโซเชียลมีเดีย พร้อมสถานะความน่าเชื่อถือ ก่อนตัดสินใจสั่งซื้อทุกครั้ง',
+  title: 'รู้ทันมิจฉาชีพ เช็กก่อนโอนเงิน',
+  subtitle: 'ศูนย์กลางตรวจสอบประวัติคนโกง วิเคราะห์ข้อความแชทต้องสงสัย และรวบรวมเคสกลโกงรอบตัวเพื่อป้องกันภัยออนไลน์',
   image: '/hero-desk.png',
   link: '',
-  button_type: 'none',
+  button_type: 'shop',
 }
 
 export function Hero() {
@@ -73,21 +73,21 @@ export function Hero() {
         </>
       )}
       <div className="relative flex min-h-[300px] flex-col justify-center gap-6 px-6 py-12 sm:px-12 md:min-h-[360px] md:max-w-[62%]">
-        <span className="w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-medium tracking-wide text-white">HiuHiu Directory</span>
+        <span className="w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-medium tracking-wide text-white">HiuHiu Anti-Scam Center</span>
         <div>
           <h1 className="font-display text-4xl font-bold leading-tight text-balance sm:text-5xl text-white">{banner.title || fallbackBanner.title}</h1>
           {banner.subtitle && <p className="mt-3 max-w-md text-sm text-white/85 sm:text-base">{banner.subtitle}</p>}
         </div>
           {banner.button_type !== 'none' && (
-            banner.link ? (
+            banner.button_type === 'website' && banner.link ? (
               <a href={banner.link} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 w-fit items-center gap-2 rounded-full bg-white px-6 text-blue-900 hover:bg-white/90 font-medium">
                 <Search className="size-4" />
-                {banner.button_type === 'website' ? 'ไปยังเว็บไซต์' : 'ไปยังร้านค้า'}
+                ไปยังเว็บไซต์แจ้งความออนไลน์
               </a>
             ) : (
               <Button render={<Link href="/shops" />} nativeButton={false} className="h-11 w-fit gap-2 rounded-full bg-white px-6 text-blue-900 hover:bg-white/90 font-medium">
                 <Search className="size-4" />
-                ดูร้านค้าทั้งหมด
+                ดูคลังเคสกลโกงทั้งหมด
               </Button>
             )
           )}

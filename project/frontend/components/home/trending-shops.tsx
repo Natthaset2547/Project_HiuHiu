@@ -1,9 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { BACKEND_URL } from '@/lib/api'
 import { ShopCard } from '@/components/shop-card'
-import { Flame } from 'lucide-react'
+import { Flame, ArrowRight } from 'lucide-react'
 
 export function TrendingShops() {
   const [shops, setShops] = useState<any[]>([])
@@ -14,13 +15,13 @@ export function TrendingShops() {
       .then(res => res.json())
       .then(data => {
         const arr = Array.isArray(data) ? data : data.results || []
-        // เอาร้านที่ปลอดภัยหรือรอดำเนินการ ที่มีดาว > 0
-        const topShops = arr.filter(s => s.status !== 'scam' && s.average_rating > 0)
-        topShops.sort((a: any, b: any) => {
-           if (b.average_rating !== a.average_rating) return b.average_rating - a.average_rating;
-           return b.review_count - a.review_count;
+        const sorted = [...arr].sort((a: any, b: any) => {
+          if ((b.average_rating || 0) !== (a.average_rating || 0)) {
+            return (b.average_rating || 0) - (a.average_rating || 0)
+          }
+          return (b.review_count || 0) - (a.review_count || 0)
         })
-        setShops(topShops.slice(0, 4))
+        setShops(sorted.slice(0, 4))
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -30,11 +31,27 @@ export function TrendingShops() {
 
   return (
     <section className="mb-12 mt-12 w-full">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-full bg-orange-100 p-2 text-orange-600 dark:bg-orange-950/30 dark:text-orange-500">
-          <Flame className="size-5" />
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="rounded-full bg-red-100 p-2 text-red-600 dark:bg-red-950/30 dark:text-red-500">
+            <Flame className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-display text-xl font-bold text-foreground">
+              เคสกลโกงระบาดหนักที่ต้องระวัง (Trending Scam Alerts)
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              รวบรวมรูปแบบกลโกงรอบตัวที่คนมักตกเป็นเหยื่อ กดเข้าไปอ่านวิธีสังเกตและแชร์ประสบการณ์เตือนภัยได้
+            </p>
+          </div>
         </div>
-        <h2 className="font-display text-xl font-bold text-foreground">ร้านค้าแนะนำยอดฮิต (Top Rated)</h2>
+        <Link
+          href="/shops"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+        >
+          ดูคลังเคสกลโกงทั้งหมด
+          <ArrowRight className="size-4" />
+        </Link>
       </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {shops.map(shop => (

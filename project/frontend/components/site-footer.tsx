@@ -16,11 +16,11 @@ export function SiteFooter() {
           <span className="font-display text-lg font-bold text-foreground">HiuHiu</span>
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          แพลตฟอร์มรวมร้านร้านค้าที่ไว้ใจได้ · ตรวจสอบก่อนสั่งซื้อทุกครั้ง
+          แพลตฟอร์มตรวจสอบมิจฉาชีพและเตือนภัยกลโกงรอบตัว · เช็กก่อนโอนเงินทุกครั้ง
         </p>
         <nav className="flex items-center gap-4 text-xs text-muted-foreground">
           <Link href="/shops" className="transition hover:text-foreground">
-            ค้นหาร้าน
+            คลังเคสกลโกง
           </Link>
           <Link href="/login" className="transition hover:text-foreground">
             เข้าสู่ระบบ

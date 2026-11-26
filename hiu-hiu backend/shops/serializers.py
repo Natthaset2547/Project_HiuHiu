@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 
 from rest_framework import serializers
-from .models import Banner, RiskRecord, RiskEvidence, Shop, Review, normalize_risk_identifier
+from .models import Banner, RiskRecord, RiskEvidence, Shop, Review, ReviewImage, normalize_risk_identifier
 
 
 class RiskEvidenceSerializer(serializers.ModelSerializer):
@@ -11,18 +11,16 @@ class RiskEvidenceSerializer(serializers.ModelSerializer):
 
 
 def normalize_shop_url(value):
-    if value is None:
-        raise serializers.ValidationError('กรุณากรอกลิงก์ร้านค้า')
+    import uuid
+    if not value or not str(value).strip():
+        return f'https://hiuhiu.local/case-{uuid.uuid4().hex[:10]}'
 
     cleaned = str(value).strip()
-    if not cleaned:
-        raise serializers.ValidationError('กรุณากรอกลิงก์ร้านค้า')
-
     normalized = cleaned if cleaned.lower().startswith(('http://', 'https://')) else f'https://{cleaned}'
     parsed = urlparse(normalized)
 
     if parsed.scheme not in {'http', 'https'} or not parsed.netloc:
-        raise serializers.ValidationError('URL ร้านค้าไม่ถูกต้อง ต้องเป็น http:// หรือ https://')
+        return f'https://hiuhiu.local/case-{uuid.uuid4().hex[:10]}'
 
     return normalized
 
@@ -31,7 +29,7 @@ from django.db.models import Avg, Count
 
 class ShopSerializer(serializers.ModelSerializer):
     is_favorited = serializers.SerializerMethodField()
-    url = serializers.URLField(max_length=500)
+    url = serializers.CharField(max_length=500, required=False, allow_blank=True)
     average_rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
 
@@ -85,11 +83,18 @@ class BannerSerializer(serializers.ModelSerializer):
         model = Banner
         fields = '__all__'
 
+class ReviewImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReviewImage
+        fields = ['id', 'image', 'created_at']
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     shop_name = serializers.CharField(source='shop.name', read_only=True)
+    images = ReviewImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Review
-        fields = ['id', 'shop', 'shop_name', 'user', 'username', 'rating', 'comment', 'image', 'created_at']
+        fields = ['id', 'shop', 'shop_name', 'user', 'username', 'rating', 'comment', 'image', 'images', 'created_at']
         read_only_fields = ['user']

@@ -159,6 +159,15 @@ class Review(models.Model):
         return f"{self.user.username} - {self.shop.name} ({self.rating}/5)"
 
 
+class ReviewImage(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='reviews/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for review {self.review_id}"
+
+
 class Favorite(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='favorites')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='favorited_by')

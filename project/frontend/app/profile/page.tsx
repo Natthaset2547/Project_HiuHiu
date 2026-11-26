@@ -24,6 +24,7 @@ type Review = {
   rating: number
   comment: string
   image?: string | null
+  images?: { id: number; image: string }[]
   created_at: string
 }
 
@@ -197,11 +198,11 @@ export default function ProfilePage() {
               <nav className="mt-6 flex flex-col gap-1">
                 <button onClick={() => setActiveTab('favorites')} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${activeTab === 'favorites' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
                   <Heart className={`size-4 ${activeTab === 'favorites' ? 'fill-current' : ''}`} />
-                  ร้านโปรดที่บันทึกไว้
+                  เคสเตือนภัยที่บันทึกไว้
                 </button>
                 <button onClick={() => setActiveTab('reviews')} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${activeTab === 'reviews' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
                   <MessageSquare className={`size-4 ${activeTab === 'reviews' ? 'fill-current' : ''}`} />
-                  ประวัติการรีวิวของฉัน
+                  ความคิดเห็นเตือนภัยของฉัน
                 </button>
                 <button onClick={() => setActiveTab('settings')} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${activeTab === 'settings' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
                   <Settings className="size-4" />
@@ -218,7 +219,7 @@ export default function ProfilePage() {
                 <div className="animate-in fade-in duration-300">
                   <div className="mb-6 flex items-center gap-2 border-b border-border pb-4">
                     <Heart className="size-5 text-red-500 fill-red-500" />
-                    <h2 className="font-display text-xl font-bold">ร้านโปรดที่บันทึกไว้</h2>
+                    <h2 className="font-display text-xl font-bold">เคสเตือนภัยที่บันทึกไว้</h2>
                   </div>
                   
                   {loadingFavorites ? (
@@ -231,9 +232,9 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-dashed border-border py-16 text-center text-muted-foreground">
-                      <p>คุณยังไม่ได้บันทึกร้านโปรดร้านไหนเลย</p>
+                      <p>คุณยังไม่ได้บันทึกเคสเตือนภัยใดๆ ไว้</p>
                       <Link href="/shops" className="mt-4 inline-block rounded-xl bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                        ไปหาร้านถูกใจกันเลย
+                        ไปดูคลังเคสกลโกงทั้งหมด
                       </Link>
                     </div>
                   )}
@@ -245,7 +246,7 @@ export default function ProfilePage() {
                 <div className="animate-in fade-in duration-300">
                   <div className="mb-6 flex items-center gap-2 border-b border-border pb-4">
                     <MessageSquare className="size-5 text-primary fill-primary" />
-                    <h2 className="font-display text-xl font-bold">ประวัติการรีวิวของฉัน</h2>
+                    <h2 className="font-display text-xl font-bold">ความคิดเห็นเตือนภัยของฉัน</h2>
                   </div>
                   
                   {loadingReviews ? (
@@ -256,16 +257,31 @@ export default function ProfilePage() {
                         <div key={review.id} className="rounded-2xl border border-border bg-secondary/20 p-5">
                           <div className="flex items-center justify-between border-b border-border/50 pb-3 mb-3">
                             <div>
-                                <span className="text-sm font-medium text-muted-foreground">รีวิวร้าน: {review.shop_name || `ร้านค้า ID ${review.shop}`}</span>
+                                <span className="text-sm font-medium text-muted-foreground">เคสเตือนภัย: {review.shop_name || `เคส ID ${review.shop}`}</span>
                             </div>
                             <Link href={`/shop/${review.shop}`} className="text-xs font-medium text-primary hover:underline">
-                              ดูร้านค้านี้ &rarr;
+                              ดูเคสนี้ &rarr;
                             </Link>
                           </div>
-                          <div className="flex gap-1 mb-3">{renderStars(review.rating)}</div>
                           <p className="text-sm whitespace-pre-wrap leading-relaxed text-foreground">{review.comment}</p>
-                          {review.image && (
-                            <img src={review.image} alt="หลักฐาน" className="mt-4 h-32 w-32 rounded-xl object-cover shadow-sm border border-border" />
+                          {(review.image || (review.images && review.images.length > 0)) && (
+                            <div className="mt-4 flex flex-wrap gap-3">
+                              {review.image && (
+                                <img
+                                  src={review.image.startsWith('http') ? review.image : `${BACKEND_URL}${review.image}`}
+                                  alt="หลักฐาน"
+                                  className="h-28 w-28 rounded-xl object-cover shadow-sm border border-border"
+                                />
+                              )}
+                              {review.images?.map((img) => (
+                                <img
+                                  key={img.id}
+                                  src={img.image.startsWith('http') ? img.image : `${BACKEND_URL}${img.image}`}
+                                  alt="หลักฐาน"
+                                  className="h-28 w-28 rounded-xl object-cover shadow-sm border border-border"
+                                />
+                              ))}
+                            </div>
                           )}
                           <p className="mt-4 text-xs text-muted-foreground">{new Date(review.created_at).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
@@ -273,9 +289,9 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-dashed border-border py-16 text-center text-muted-foreground">
-                      <p>คุณยังไม่เคยเขียนรีวิวให้ร้านไหนเลย</p>
+                      <p>คุณยังไม่เคยร่วมแสดงความคิดเห็นเตือนภัยในเคสไหนเลย</p>
                       <Link href="/shops" className="mt-4 inline-block rounded-xl bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                        ไปรีวิวร้านแรกของคุณเลย
+                        ไปดูคลังเคสกลโกงเลย
                       </Link>
                     </div>
                   )}

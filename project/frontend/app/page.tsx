@@ -6,10 +6,12 @@ import { SiteFooter } from '@/components/site-footer'
 import { Hero } from '@/components/home/hero'
 import { Categories } from '@/components/home/categories'
 import { TrendingShops } from '@/components/home/trending-shops'
+import { ScamAnalyzer } from '@/components/home/scam-analyzer'
+import { EmergencyHelp } from '@/components/home/emergency-help'
 import { BACKEND_URL } from '@/lib/api'
 
 type RiskResult = {
-  status: 'safe' | 'pending' | 'scam'
+  status: 'safe' | 'pending' | 'scam' | 'warning' | 'neutral'
   message: string
   source: string
   bad_records_found: number
@@ -20,7 +22,7 @@ type RiskResult = {
 }
 
 const sourceLabels: Record<string, string> = {
-  whitelist: 'Whitelist ของผู้ดูแลระบบ',
+  whitelist: 'ฐานข้อมูลเคสเตือนภัยในระบบ',
   registry: 'ทะเบียนข้อมูลที่ผู้ดูแลระบบตรวจสอบ',
   google: 'Google Search',
   brave: 'Brave Search',
@@ -64,18 +66,18 @@ export default function HomePage() {
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-8 px-4 py-8">
         <Hero />
 
-        {/* ----- เริ่มส่วนตรวจสอบประวัติร้านค้า ----- */}
+        {/* ----- เริ่มส่วนตรวจสอบประวัติคนโกง ----- */}
         <div className="bg-card rounded-2xl shadow-sm p-8 mb-10 border border-border relative">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 p-2 rounded-full">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               </div>
-              <h2 className="text-xl font-bold text-foreground">ตรวจสอบประวัติร้านค้า</h2>
+              <h2 className="text-xl font-bold text-foreground">ตรวจสอบประวัติคนโกง & บัญชีต้องสงสัย</h2>
             </div>
           </div>
           <p className="text-muted-foreground mb-6 ml-0 md:ml-11 text-sm md:text-base mt-2 sm:mt-0">
-            พิมพ์ชื่อร้าน, เลขบัญชี, เบอร์พร้อมเพย์, ลิงก์ หรือชื่อเจ้าของบัญชี เพื่อตรวจสอบประวัติก่อนโอนเงิน
+            พิมพ์ชื่อ-นามสกุลคนขาย, เลขบัญชีธนาคาร, เบอร์พร้อมเพย์, ชื่อเพจ หรือลิงก์ เพื่อเช็กประวัติการโกงก่อนโอนเงิน
           </p>
 
           <div className="flex flex-col gap-3 ml-0 md:ml-11 md:flex-row">
@@ -184,9 +186,11 @@ export default function HomePage() {
             </div>
           )}
         </div>
-        {/* ----- จบส่วนตรวจสอบประวัติร้านค้า ----- */}
+        {/* ----- จบส่วนตรวจสอบประวัติคนโกง ----- */}
+        <ScamAnalyzer />
         <TrendingShops />
         <Categories />
+        <EmergencyHelp />
       </main>
       <SiteFooter />
     </div>

@@ -102,9 +102,9 @@ export function SiteHeader({ initialQuery = '' }: { initialQuery?: string }) {
                 router.push(`/shops?${params.toString()}`)
               }
             }}
-            placeholder="ค้นหาร้านค้า..."
+            placeholder="ค้นหาเคสกลโกง เช่น บัตรคอนเสิร์ต, หอพัก, งานพาร์ทไทม์..."
             className="h-10 w-full rounded-full border border-border bg-muted/60 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:bg-background focus:ring-2 focus:ring-ring/25"
-            aria-label="ค้นหาร้านค้า"
+            aria-label="ค้นหาเคสกลโกง"
           />
         </div>
 
