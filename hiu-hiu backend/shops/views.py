@@ -424,7 +424,7 @@ class ShopViewSet(viewsets.ModelViewSet):
             instance.image.name = 'shops/antiscam_case_1.png'
             instance.save()
 
-    queryset = Shop.objects.all().order_by('-id')
+    queryset = Shop.objects.all().order_by('id')
     serializer_class = ShopSerializer
     permission_classes = [IsStaffOrCreateOrReadOnly]
 

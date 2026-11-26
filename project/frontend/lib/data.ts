@@ -51,7 +51,7 @@ export const statusConfig: Record<
   { label: string; className: string; dotClassName: string }
 > = {
   safe: {
-    label: 'แนวทางป้องกัน',
+    label: 'แจ้งเตือนทั่วไป',
     className: 'bg-safe text-safe-foreground',
     dotClassName: 'bg-safe-foreground',
   },

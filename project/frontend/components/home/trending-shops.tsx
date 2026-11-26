@@ -15,13 +15,9 @@ export function TrendingShops() {
       .then(res => res.json())
       .then(data => {
         const arr = Array.isArray(data) ? data : data.results || []
-        const sorted = [...arr].sort((a: any, b: any) => {
-          if ((b.average_rating || 0) !== (a.average_rating || 0)) {
-            return (b.average_rating || 0) - (a.average_rating || 0)
-          }
-          return (b.review_count || 0) - (a.review_count || 0)
-        })
-        setShops(sorted.slice(0, 4))
+        // เอาเฉพาะเคสระดับอันตรายสูง (scam) มาแสดงในหมวดระบาดหนัก โดยเรียงตาม id น้อยไปมาก (4 เคสหลัก)
+        const highRisk = arr.filter((s: any) => s.status === 'scam').sort((a: any, b: any) => a.id - b.id)
+        setShops((highRisk.length >= 4 ? highRisk : arr).slice(0, 4))
       })
       .catch(console.error)
       .finally(() => setLoading(false))

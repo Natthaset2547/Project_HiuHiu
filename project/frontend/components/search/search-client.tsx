@@ -26,7 +26,7 @@ const SEVERITY_FILTERS: { value: 'scam' | 'pending' | 'safe'; label: string; dot
   },
   {
     value: 'safe',
-    label: 'แนวทางป้องกันตัว',
+    label: 'แจ้งเตือนทั่วไป',
     dotClass: 'bg-green-500',
     badgeClass: 'border-green-500/40 bg-green-500/10 text-green-400',
   },
@@ -473,7 +473,7 @@ export function SearchClient({ query = '' }: { query?: string }) {
                 >
                   <option value="scam">อันตรายสูง (ระบาดหนัก)</option>
                   <option value="pending">เฝ้าระวังระบาด</option>
-                  <option value="safe">แนวทางป้องกัน</option>
+                  <option value="safe">แจ้งเตือนทั่วไป</option>
                 </select>
               </div>
             </div>

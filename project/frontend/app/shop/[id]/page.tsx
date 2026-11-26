@@ -22,7 +22,7 @@ type Shop = {
 }
 
 const statusLabels = {
-  safe: { label: 'แนวทางป้องกัน', className: 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300 border border-green-500/30' },
+  safe: { label: 'แจ้งเตือนทั่วไป', className: 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300 border border-green-500/30' },
   pending: { label: 'เฝ้าระวังระบาด', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-300 border border-yellow-500/30' },
   scam: { label: 'อันตรายสูง (ระบาดหนัก)', className: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-500/30' },
 }
